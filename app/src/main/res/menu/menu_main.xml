@@ -1,0 +1,18 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.example.turisticky_zavod.MainActivity">
+    <group android:id="@+id/miscellaneous">
+        <item
+            android:id="@+id/menuItem_nfcCheck"
+            android:title="CHECK NFC" app:showAsAction="always"/>
+        <item
+            android:id="@+id/menuItem_sendDataToPc"
+            android:title="@string/menu_item_send_data_to_pc" />
+    </group>
+    <group android:id="@+id/delete_data">
+        <item
+            android:id="@+id/menuItem_deleteAllData"
+            android:title="@string/menu_item_delete_all_data" />
+    </group>
+</menu>

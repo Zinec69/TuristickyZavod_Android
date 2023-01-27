@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="color_runnerId">#7E42E8</color>
+    <color name="color_runnerInfo">#E6E6E6</color>
+    <color name="color_divider_vertical">#27535353</color>
+    <color name="color_divider_horizontal">#4D888888</color>
+    <color name="color_card_view_stroke">#3F394E</color>
+</resources>
