@@ -1,8 +1,6 @@
 package com.example.turisticky_zavod
 
 import android.content.DialogInterface
-import android.nfc.NdefMessage
-import android.nfc.NdefRecord
 import android.nfc.NfcAdapter
 import android.nfc.NfcAdapter.*
 import android.nfc.Tag
@@ -10,16 +8,20 @@ import android.nfc.tech.MifareClassic
 import android.os.Bundle
 import android.view.*
 import android.widget.*
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.MenuCompat
 import androidx.core.view.WindowCompat
+import androidx.core.view.children
 import androidx.core.view.get
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.turisticky_zavod.databinding.ActivityMainBinding
-import com.example.turisticky_zavod.databinding.ListRunnersBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 import java.io.IOException
+import java.nio.charset.Charset
 import kotlin.collections.ArrayList
 
 
@@ -30,10 +32,16 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
     private var _binding: ActivityMainBinding? = null
     private val binding get() = _binding!!
 
-    private var itemList = ArrayList<Person>()
+    private var peopleList = ArrayList<Person>()
     private lateinit var rvAdapter: RvAdapter
 
     var nfcAdapter: NfcAdapter? = null
+    var nfcHelper = MyNfcHelper()
+
+    lateinit var view: View
+
+    private lateinit var builder: AlertDialog
+    private lateinit var cancelDialog: AlertDialog
 
     override fun onCreate(savedInstanceState: Bundle?) {
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -43,7 +51,7 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
         setContentView(binding.root)
         setSupportActionBar(binding.toolbar)
         binding.recyclerView.layoutManager = LinearLayoutManager(this)
-        rvAdapter = RvAdapter(itemList, object: RvAdapter.OptionsMenuLongClickListener {
+        rvAdapter = RvAdapter(peopleList, object: RvAdapter.OptionsMenuLongClickListener {
             override fun onOptionsMenuLongClicked(position: Int): Boolean {
                 performOptionsMenuClick(position)
                 return true
@@ -51,78 +59,78 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
         })
         binding.recyclerView.adapter = rvAdapter
 
-        binding.fabAdd.setOnClickListener {
-            val i = itemList.size + 1
-
-            itemList.add(0, Person(i, "Jméno Příjmení $i", "Oddíl $i"))
-            rvAdapter.notifyItemInserted(0)
-            rvAdapter.notifyItemRangeChanged(0, itemList.size)
-
-            if (i == 1)
-                binding.textViewNoData.visibility = View.GONE
-        }
-
         nfcAdapter = getDefaultAdapter(this@MainActivity)
-    }
 
-    override fun onResume() {
-        super.onResume()
-
-        if (nfcAdapter != null) {
-            val options = Bundle()
-            options.putInt(EXTRA_READER_PRESENCE_CHECK_DELAY, 250)
-
-            nfcAdapter!!.enableReaderMode(this@MainActivity, this, FLAG_READER_NFC_A, options)
+        binding.fabAdd.setOnClickListener {
+//            if (nfcAdapter != null) {
+//                if (nfcHelper.state == NfcState.READ) {
+//                    val options = Bundle()
+//                    options.putInt(EXTRA_READER_PRESENCE_CHECK_DELAY, 250)
+//
+//                    nfcAdapter!!.enableReaderMode(this@MainActivity, this, FLAG_READER_NFC_A, options)
+//                }
+//                else
+//                    nfcAdapter!!.disableReaderMode(this@MainActivity)
+//            }
+            handleAddingNewPerson()
         }
-    }
 
-    override fun onPause() {
-        super.onPause()
-        if (nfcAdapter != null)
-            nfcAdapter!!.disableReaderMode(this@MainActivity)
+        view = layoutInflater.inflate(R.layout.dialog_add, null)
+        builder = MaterialAlertDialogBuilder(this@MainActivity)
+            .setTitle("Nový záznam")
+            .setView(view)
+            .setCancelable(true)
+            .setOnDismissListener { nfcAdapter!!.disableReaderMode(this@MainActivity) }
+            .setOnCancelListener { Toast.makeText(this@MainActivity, "lmaoo", Toast.LENGTH_SHORT).show() }
+            .create()
+        cancelDialog = MaterialAlertDialogBuilder(this@MainActivity)
+            .setTitle("Zrušit")
+            .setMessage("Opravdu chcete odejít? Změny nebudou uloženy")
+            .setCancelable(false)
+            .setNegativeButton("Ne") { dialog: DialogInterface, _: Int -> dialog.cancel() }
+            .setPositiveButton("Ano") { _: DialogInterface, _: Int -> builder.dismiss() }
+            .create()
     }
 
     override fun onTagDiscovered(tag: Tag?) {
+        runOnUiThread {
+            view.findViewById<TextView>(R.id.textView_chipScanPrompt).visibility = View.GONE
+            view.findViewById<LinearLayout>(R.id.linearLayout_addDialogContent).visibility = View.VISIBLE
+            view.findViewById<LinearLayout>(R.id.linearLayout).visibility = View.VISIBLE
+        }
         val ndef = MifareClassic.get(tag)
         if (ndef != null) {
-            val record = NdefRecord.createTextRecord("en", "English string")
-            val msg = NdefMessage(record)
             try {
                 ndef.connect()
                 ndef.authenticateSectorWithKeyA(0, MifareClassic.KEY_DEFAULT)
-//                val block0 = ndef.readBlock(0)
+
 //                val str = ByteArray(MifareClassic.BLOCK_SIZE)
 //                str.fill(0.toByte(), 0, MifareClassic.BLOCK_SIZE - 1)
-//                val toCopy = "xd".toByteArray()
+//                val toCopy = "Jakub Ostružka  ".toByteArray(Charset.forName("ISO-8859-2"))
 //                System.arraycopy(toCopy, 0, str, 0, toCopy.size)
-//                ndef.writeBlock(1, str)
-                val block1 = ndef.readBlock(1)
-                val block2 = ndef.readBlock(2)
+//                ndef.writeBlock(4, toCopy)
+
+                val block1 = ndef.readBlock(1).toString(Charset.forName("ISO-8859-2"))
+                val block2 = ndef.readBlock(2).toString(Charset.forName("ISO-8859-2"))
                 ndef.authenticateSectorWithKeyA(1, MifareClassic.KEY_DEFAULT)
-                val block4 = ndef.readBlock(4)
+                val block4 = ndef.readBlock(4).toString(Charset.forName("ISO-8859-2"))
 
                 runOnUiThread {
                     try {
-                        val idk = block1.takeWhile { b -> b != 0.toByte() }.toByteArray().decodeToString()
-                        itemList.add(0, Person(idk.toInt(), block2.decodeToString(), block4.decodeToString()))
-                        rvAdapter.notifyItemInserted(0)
-                        rvAdapter.notifyItemRangeChanged(0, itemList.size)
-                        if (itemList.size == 1)
-                            binding.textViewNoData.visibility = View.GONE
+                        view.findViewById<TextInputEditText>(R.id.editText_RunnerId).setText(block1)
+                        view.findViewById<TextInputEditText>(R.id.editText_RunnerName).setText(block2)
+                        view.findViewById<TextInputEditText>(R.id.editText_RunnerTeam).setText(block4)
+
+//                        val idk = block1.takeWhile { b -> b != 0.toByte() }.toByteArray().decodeToString()
+//                        peopleList.add(0, Person(idk.toInt(), block2.decodeToString(), block4.decodeToString()))
+//                        rvAdapter.notifyItemInserted(0)
+//                        rvAdapter.notifyItemRangeChanged(0, peopleList.size)
+//                        if (peopleList.size == 1)
+//                            binding.textViewNoData.visibility = View.GONE
                     } catch (e: Exception) {
                         Toast.makeText(this@MainActivity, e.toString(), Toast.LENGTH_LONG).show()
                     }
                 }
-
-//                try {
-//                    val notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-//                    val r = RingtoneManager.getRingtone(this@MainActivity, notification)
-//                    r.play()
-//                } catch (e: Exception) {
-//                    val alarm = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-//                    val r = RingtoneManager.getRingtone(this@MainActivity, alarm)
-//                    r.play()
-//                }
             } catch (e: Exception) {
                 runOnUiThread {
                     Toast.makeText(this@MainActivity, e.toString(), Toast.LENGTH_LONG).show()
@@ -136,7 +144,25 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
                     }
                 }
             }
+        } else {
+            runOnUiThread {
+                Toast.makeText(this@MainActivity, "Nepodporovaný typ čipu", Toast.LENGTH_LONG).show()
+            }
         }
+        runOnUiThread {
+            nfcAdapter!!.disableReaderMode(this@MainActivity)
+        }
+    }
+
+    private fun handleAddingNewPerson() {
+        val options = Bundle()
+        options.putInt(EXTRA_READER_PRESENCE_CHECK_DELAY, 250)
+        nfcAdapter!!.enableReaderMode(this@MainActivity, this, FLAG_READER_NFC_A, options)
+
+//        view.findViewById<Button>(R.id.button_save).setOnClickListener { builder.dismiss() }
+        view.findViewById<Button>(R.id.button_cancel).setOnClickListener { cancelDialog.show() }
+
+        builder.show()
     }
 
     private fun performOptionsMenuClick(position: Int) {
@@ -153,27 +179,27 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
                         builder.setNegativeButton("Ne") { dialog: DialogInterface, _: Int -> dialog.cancel() }
                         builder.setPositiveButton("Ano") { _: DialogInterface?, _: Int ->
 
-                            val tempItem = itemList[position]
-                            itemList.remove(tempItem)
+                            val tempItem = peopleList[position]
+                            peopleList.remove(tempItem)
 
-                            if (itemList.size == 0)
+                            if (peopleList.size == 0)
                                 binding.textViewNoData.visibility = View.VISIBLE
 
-                            else if (position == itemList.size)
+                            else if (position == peopleList.size)
                                 findViewById<RecyclerView>(R.id.recyclerView)
                                     .getChildAt(position - 1)
                                     .findViewById<View>(R.id.divider_horizontal)
                                     .visibility = View.GONE
 
                             rvAdapter.notifyItemRemoved(position)
-                            rvAdapter.notifyItemRangeChanged(0, itemList.size)
+                            rvAdapter.notifyItemRangeChanged(0, peopleList.size)
                         }
                         builder.create().show()
 
                         return true
                     }
                     R.id.menuItem_listItemEdit -> {
-                        Toast.makeText(this@MainActivity , "Position: $position\nSize: ${itemList.size}" , Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@MainActivity , "Position: $position\nSize: ${peopleList.size}" , Toast.LENGTH_SHORT).show()
                         return true
                     }
                 }
@@ -196,7 +222,15 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
         // as you specify a parent activity in AndroidManifest.xml.
         return when (item.itemId) {
             R.id.menuItem_sendDataToPc -> {
-                Toast.makeText(this, "lmao", Toast.LENGTH_SHORT).show()
+                val i = peopleList.size + 1
+
+                peopleList.add(0, Person(i, "Jméno Příjmení $i", "Oddíl $i"))
+                rvAdapter.notifyItemInserted(0)
+                rvAdapter.notifyItemRangeChanged(0, peopleList.size)
+
+                if (i == 1)
+                    binding.textViewNoData.visibility = View.GONE
+
                 return true
             }
             R.id.menuItem_deleteAllData -> {
@@ -206,24 +240,13 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
                 builder.setCancelable(false)
                 builder.setNegativeButton("Ne") { dialog: DialogInterface, _: Int -> dialog.cancel() }
                 builder.setPositiveButton("Ano") { _: DialogInterface?, _: Int ->
-                    val size = itemList.size
-                    itemList.clear()
+                    val size = peopleList.size
+                    peopleList.clear()
                     rvAdapter.notifyItemRangeRemoved(0, size)
                     binding.textViewNoData.visibility = View.VISIBLE
                 }
                 builder.create().show()
 
-                return true
-            }
-            R.id.menuItem_nfcCheck -> {
-                if (nfcAdapter == null)
-                    Toast.makeText(this@MainActivity, "NFC not supported", Toast.LENGTH_SHORT).show()
-                else {
-                    if (nfcAdapter!!.isEnabled)
-                        Toast.makeText(this@MainActivity, "NFC is supported and enabled", Toast.LENGTH_SHORT).show()
-                    else
-                        Toast.makeText(this@MainActivity, "NFC is supported, but not enabled", Toast.LENGTH_SHORT).show()
-                }
                 return true
             }
             else -> super.onOptionsItemSelected(item)
@@ -233,48 +256,5 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
     override fun onDestroy() {
         super.onDestroy()
         _binding = null
-    }
-}
-
-class RvAdapter(
-    private var itemList: List<Person>,
-    private var optionsMenuLongClickListener: OptionsMenuLongClickListener
-) : RecyclerView.Adapter<RvAdapter.ViewHolder>() {
-
-    interface OptionsMenuLongClickListener {
-        fun onOptionsMenuLongClicked(position: Int): Boolean
-    }
-
-    inner class ViewHolder(val binding: ListRunnersBinding, val parent: ViewGroup) : RecyclerView.ViewHolder(binding.root)
-
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val binding = ListRunnersBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-        return ViewHolder(binding, parent)
-    }
-
-    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        with (holder) {
-            with (itemList[position]) {
-                binding.textViewRunnerId.text = this.id.toString()
-                binding.textViewRunnerName.text = this.name
-                binding.textViewRunnerTeam.text = this.team
-
-                if (position == itemCount - 1)
-                    binding.dividerHorizontal.visibility = View.GONE
-
-                binding.root.setOnLongClickListener {
-                    optionsMenuLongClickListener.onOptionsMenuLongClicked(position)
-                }
-            }
-            val count = parent.childCount
-            Toast.makeText(parent.context, "pos: $position, child: $count, item: ${itemList.size}", Toast.LENGTH_SHORT).show()
-            for (i in 0 until count - 1) {
-                parent.getChildAt(i).findViewById<View>(R.id.divider_horizontal).visibility = View.VISIBLE
-            }
-        }
-    }
-
-    override fun getItemCount(): Int {
-        return itemList.size
     }
 }

@@ -1,17 +1,25 @@
 <resources>
+    <!--  General  -->
     <string name="app_name">Turistický závod</string>
 
+    <!--  MainActivity  -->
     <string name="menu_item_send_data_to_pc">Poslat data do PC</string>
     <string name="menu_item_delete_all_data">Vymazat všechna data</string>
+    <string name="text_view_no_data">Nový záznam přidáte tlačítkem vpravo dole</string>
+    <string name="text_view_station">Stanoviště:</string>
+    <string name="text_view_guard">Hlídka:</string>
 
+    <!--  menu_list  -->
     <string name="menu_item_edit_item">Upravit</string>
     <string name="menu_item_delete_item">Smazat</string>
 
-    <string name="button_save_phone">Uložit jen do mobilu</string>
-    <string name="button_save_chip">Uložit na čip</string>
+    <!--  dialog_add  -->
+    <string name="button_save">Uložit</string>
+    <string name="button_cancel">Zrušit</string>
 
+    <!--  list_runners  -->
     <string name="edit_text_runner_id">Číslo běžce</string>
-    <string name="text_view_no_data">Zatím žádná data</string>
-    <string name="text_view_station">Stanoviště:</string>
-    <string name="text_view_guard">Hlídka:</string>
+    <string name="edit_text_runner_name">Jméno</string>
+    <string name="edit_text_runner_team">Oddíl</string>
+
 </resources>

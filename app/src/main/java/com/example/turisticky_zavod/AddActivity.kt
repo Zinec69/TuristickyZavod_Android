@@ -10,30 +10,29 @@ import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
-import com.example.turisticky_zavod.databinding.ActivityAddBinding
-import com.example.turisticky_zavod.databinding.ActivityMainBinding
+//import com.example.turisticky_zavod.databinding.ActivityAddBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 class AddActivity : AppCompatActivity() {
 
-    private lateinit var binding: ActivityAddBinding
+//    private lateinit var binding: ActivityAddBinding
     private lateinit var editText_runnerId : EditText
     private lateinit var button_save_phone : Button
     private lateinit var layout_add : ConstraintLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityAddBinding.inflate(layoutInflater)
-        setContentView(R.layout.activity_add)
+//        binding = ActivityAddBinding.inflate(layoutInflater)
+        setContentView(R.layout.dialog_add)
 
-        setSupportActionBar(binding.toolbar)
+//        setSupportActionBar(binding.toolbar)
 
         if (intent.getStringExtra("xd") != null)
             Toast.makeText(this, intent.getStringExtra("xd"), Toast.LENGTH_SHORT).show()
 
         editText_runnerId = findViewById(R.id.editText_RunnerId)
-        button_save_phone = findViewById(R.id.button_save_phone)
-        layout_add = findViewById<View>(R.id.layout_add) as ConstraintLayout
+        button_save_phone = findViewById(R.id.button_save)
+//        layout_add = findViewById<View>(R.id.layout_add) as ConstraintLayout
 
         button_save_phone.setOnClickListener { finish() }
         layout_add.setOnClickListener { view: View -> loseFocus(view) }
