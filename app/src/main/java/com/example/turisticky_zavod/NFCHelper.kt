@@ -2,21 +2,34 @@ package com.example.turisticky_zavod
 
 import android.nfc.NfcAdapter
 import android.nfc.tech.MifareClassic
-import android.widget.Toast
 import java.nio.charset.Charset
 
-class MyNfcHelper {
+class NFCHelper {
 
-    var state = NfcState.READ
+    private val BLOCK_ID = 1
+    private val BLOCK_NAME = 2
+    private val BLOCK_TEAM = 4
 
-    fun readPerson(chip: MifareClassic): Person {
-        return Person(1, "", "")
+    fun readPerson(tag: MifareClassic): Person {
+        val id = readBlock(tag, BLOCK_ID).dropLastWhile { c -> !c.isLetterOrDigit() }.toInt()
+        val name = readBlock(tag, BLOCK_NAME).dropLastWhile { c -> !c.isLetterOrDigit() }
+        val team = readBlock(tag, BLOCK_TEAM).dropLastWhile { c -> !c.isLetterOrDigit() }
+        return Person(id, name, team)
+    }
+
+    private fun readBlock(tag: MifareClassic, block: Int): String {
+        tag.authenticateSectorWithKeyA(tag.blockToSector(block), MifareClassic.KEY_DEFAULT)
+        return tag.readBlock(block)
+            .toString(Charset.forName("ISO-8859-2"))
     }
 
     fun writePersonOnChip(person: Person) {
-        val id_bytes = person.id.toString().toByteArray(Charset.forName("ISO-8859-2"))
-        val name_bytes = stringToByteArraySplits(person.name)
-        val team_bytes = stringToByteArraySplits(person.team)
+        val id_str = person.id.toString().toByteArray(Charset.forName("ISO-8859-2"))
+        val id_bytes = ByteArray(16) { i -> if (i < id_str.size) id_str[i] else 0 }
+        val name_str = person.name!!.toByteArray(Charset.forName("ISO-8859-2"))
+        val name_bytes = ByteArray(16) { i -> if (i < name_str.size) name_str[i] else 0 }
+        val team_str = person.team!!.toByteArray(Charset.forName("ISO-8859-2"))
+        val team_bytes = ByteArray(16) { i -> if (i < team_str.size) team_str[i] else 0 }
     }
 
     fun stringToByteArraySplits(str: String): List<ByteArray> {
@@ -51,9 +64,6 @@ class MyNfcHelper {
         }
     }
 
-    enum class NfcState {
-        READ, WRITE
-    }
     enum class NfcAvailability {
         READY, OFF, NOT_SUPPORTED
     }

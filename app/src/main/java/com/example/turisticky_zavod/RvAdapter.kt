@@ -30,17 +30,9 @@ class RvAdapter(
                 binding.textViewRunnerName.text = this.name
                 binding.textViewRunnerTeam.text = this.team
 
-                if (position == itemCount - 1)
-                    binding.dividerHorizontal.visibility = View.GONE
-
-                binding.root.setOnLongClickListener {
+                binding.cardView.setOnLongClickListener {
                     optionsMenuLongClickListener.onOptionsMenuLongClicked(position)
                 }
-            }
-            val count = parent.childCount
-            Toast.makeText(parent.context, "pos: $position, child: $count, item: ${peopleList.size}", Toast.LENGTH_SHORT).show()
-            for (i in 0 until count - 1) {
-                parent.getChildAt(i).findViewById<View>(R.id.divider_horizontal).visibility = View.VISIBLE
             }
         }
     }

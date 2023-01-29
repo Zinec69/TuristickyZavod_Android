@@ -7,6 +7,16 @@
     android:fitsSystemWindows="true"
     tools:context=".MainActivity">
 
+    <TextView
+        android:id="@+id/textView_noData"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:text="@string/text_view_no_data"
+        android:textAlignment="center"
+        android:textColor="?android:attr/textColorLink"
+        android:visibility="visible" />
+
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
@@ -27,7 +37,7 @@
         android:layout_marginTop="?attr/actionBarSize">
 
         <TextView
-            android:id="@+id/textView_stationName"
+            android:id="@+id/textView_checkpointName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/text_view_station"
@@ -48,7 +58,7 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@id/textView_stationName"
+            app:layout_constraintTop_toTopOf="@id/textView_checkpointName"
             app:layout_constraintVertical_bias="0.0"
             app:layout_constraintHorizontal_bias="0.0"
             android:layout_marginStart="110dp"/>
@@ -61,7 +71,7 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/textView_stationName"
+            app:layout_constraintTop_toBottomOf="@id/textView_checkpointName"
             app:layout_constraintVertical_bias="0.0"
             app:layout_constraintHorizontal_bias="0.0"
             android:layout_marginStart="20dp"
@@ -80,31 +90,18 @@
             app:layout_constraintHorizontal_bias="0.0"
             android:layout_marginStart="110dp" />
 
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/cardView"
+        <RelativeLayout
+            android:id="@+id/linearLayout_peopleList"
+            android:orientation="vertical"
             android:layout_width="385dp"
             android:layout_height="match_parent"
             android:layout_marginTop="65dp"
-            android:layout_marginBottom="10dp"
-            app:cardCornerRadius="15dp"
-            app:cardElevation="5dp"
             app:contentPaddingBottom="5dp"
             app:contentPaddingTop="5dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/textView_guardName">
-
-            <TextView
-                android:id="@+id/textView_noData"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="40dp"
-                android:layout_gravity="center"
-                android:textAlignment="center"
-                android:text="@string/text_view_no_data"
-                android:textColor="?android:attr/textColorLink"
-                android:visibility="visible" />
 
             <androidx.core.widget.NestedScrollView
                 android:layout_width="match_parent"
@@ -124,7 +121,7 @@
                 </LinearLayout>
             </androidx.core.widget.NestedScrollView>
 
-        </com.google.android.material.card.MaterialCardView>
+        </RelativeLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -138,14 +135,5 @@
         app:srcCompat="@drawable/plus_icon_thick"
         android:contentDescription="Přidat nový záznam"
         android:visibility="visible"/>
-
-    <ProgressBar
-        android:id="@+id/progressBar3"
-        style="?android:attr/progressBarStyle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:layout_anchor="@+id/constraintLayout"
-        app:layout_anchorGravity="center"
-        android:visibility="gone"/>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

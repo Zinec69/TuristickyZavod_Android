@@ -7,15 +7,25 @@
     android:gravity="center_horizontal"
     android:paddingTop="20dp">
 
+    <ImageView
+        android:id="@+id/imageView_scanChip"
+        style="@style/nfcIconStyle"
+        android:layout_width="200dp"
+        android:layout_height="180dp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="50dp"
+        android:alpha="0.5"
+        android:visibility="visible" />
+
     <TextView
         android:id="@+id/textView_chipScanPrompt"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
-        android:layout_marginBottom="200dp"
         android:layout_marginTop="230dp"
+        android:layout_marginBottom="180dp"
         android:text="Naskenujte čip"
-        android:visibility="visible"/>
+        android:visibility="visible" />
 
     <LinearLayout
         android:id="@+id/linearLayout_addDialogContent"
@@ -26,7 +36,7 @@
 
         <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
-            android:layout_height="400dp"
+            android:layout_height="450dp"
             android:fillViewport="true">
 
             <LinearLayout
@@ -39,9 +49,7 @@
                     android:id="@+id/textInputLayout_RunnerId"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="30dp"
-                    android:enabled="false"
-                    android:visibility="visible">
+                    android:layout_marginHorizontal="30dp">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/editText_RunnerId"
@@ -50,7 +58,7 @@
                         android:enabled="false"
                         android:hint="@string/edit_text_runner_id"
                         android:inputType="number"
-                        android:text="25" />
+                        android:text="" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.textfield.TextInputLayout
@@ -58,9 +66,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="30dp"
-                    android:layout_marginTop="15dp"
-                    android:enabled="false"
-                    android:visibility="visible">
+                    android:layout_marginTop="15dp">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/editText_RunnerName"
@@ -69,7 +75,7 @@
                         android:enabled="false"
                         android:hint="@string/edit_text_runner_name"
                         android:inputType="text"
-                        android:text="Pepoušek Levandulový" />
+                        android:text="" />
 
                 </com.google.android.material.textfield.TextInputLayout>
 
@@ -79,16 +85,16 @@
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="30dp"
                     android:layout_marginTop="15dp"
-                    android:enabled="false"
-                    android:visibility="visible">
+                    android:focusable="false">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/editText_RunnerTeam"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:enabled="false"
                         android:hint="@string/edit_text_runner_team"
                         android:inputType="text"
-                        android:text="Divočáci" />
+                        android:text="" />
 
                 </com.google.android.material.textfield.TextInputLayout>
 
@@ -97,17 +103,14 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="30dp"
-                    android:layout_marginTop="15dp"
-                    android:enabled="false"
-                    android:visibility="visible">
+                    android:layout_marginTop="15dp">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/aeradsagerg"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:hint="test"
-                        android:inputType="text"
-                        android:text="test" />
+                        android:inputType="text" />
 
                 </com.google.android.material.textfield.TextInputLayout>
 
@@ -116,112 +119,31 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="30dp"
-                    android:layout_marginTop="15dp"
-                    android:enabled="false"
-                    android:visibility="visible">
+                    android:layout_marginTop="15dp">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/agdfhergerg"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:hint="test"
-                        android:inputType="text"
-                        android:text="test" />
+                        android:inputType="text" />
 
                 </com.google.android.material.textfield.TextInputLayout>
 
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/adafgsdg"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="30dp"
-                    android:layout_marginTop="15dp"
-                    android:enabled="false"
-                    android:visibility="visible">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/aesffewrgerg"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="test"
-                        android:inputType="text"
-                        android:text="test" />
-
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/fgssdg"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="30dp"
-                    android:layout_marginTop="15dp"
-                    android:enabled="false"
-                    android:visibility="visible">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/aersdfaagerg"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="test"
-                        android:inputType="text"
-                        android:text="test" />
-
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/fgsdg"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="30dp"
-                    android:layout_marginTop="15dp"
-                    android:enabled="false"
-                    android:visibility="visible">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/aergerg"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="test"
-                        android:inputType="text"
-                        android:text="test" />
-
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/dfgdsf"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="30dp"
-                    android:layout_marginTop="15dp"
-                    android:enabled="false"
-                    android:visibility="visible">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/sdgdfh"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:enabled="false"
-                        android:hint="test"
-                        android:inputType="text"
-                        android:text="test" />
-
-                </com.google.android.material.textfield.TextInputLayout>
             </LinearLayout>
         </androidx.core.widget.NestedScrollView>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingTop="20dp">
+            android:orientation="vertical">
 
             <LinearLayout
                 android:id="@+id/linearLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="35dp"
-                android:paddingVertical="10dp"
-                android:visibility="visible">
+                android:paddingVertical="10dp">
 
                 <Button
                     android:id="@+id/button_cancel"
@@ -244,14 +166,5 @@
         </LinearLayout>
 
     </LinearLayout>
-
-    <ImageView
-        android:id="@+id/imageView"
-        android:layout_width="200dp"
-        android:layout_height="180dp"
-        android:layout_marginTop="50dp"
-        style="@style/nfcIconStyle"
-        android:alpha="0.5"
-        android:layout_centerHorizontal="true"/>
 
 </RelativeLayout>
