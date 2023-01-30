@@ -1,31 +1,90 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/layout_add"
-    android:gravity="center_horizontal"
-    android:paddingTop="20dp">
+    android:gravity="center_horizontal">
 
-    <ImageView
-        android:id="@+id/imageView_scanChip"
-        style="@style/nfcIconStyle"
-        android:layout_width="200dp"
-        android:layout_height="180dp"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="50dp"
-        android:alpha="0.5"
-        android:visibility="visible" />
+    <com.airbnb.lottie.LottieAnimationView
+        android:id="@+id/animation_nfcScanning"
+        style="@style/nfcScanning"
+        android:layout_width="match_parent"
+        android:layout_height="400dp"
+        android:layout_centerInParent="true"
+        android:visibility="visible"
+        app:lottie_autoPlay="true"
+        app:lottie_loop="true" />
 
-    <TextView
-        android:id="@+id/textView_chipScanPrompt"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="230dp"
-        android:layout_marginBottom="180dp"
-        android:text="Naskenujte čip"
-        android:visibility="visible" />
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/constraintLayout_nfcOff"
+        android:layout_width="match_parent"
+        android:layout_height="420dp"
+        android:visibility="gone">
+
+<!--        <TextView-->
+<!--            android:id="@+id/textView_nfcOff"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginTop="100dp"-->
+<!--            android:text="@string/text_view_nfc_off"-->
+<!--            app:layout_constraintBottom_toBottomOf="parent"-->
+<!--            app:layout_constraintEnd_toEndOf="parent"-->
+<!--            app:layout_constraintStart_toStartOf="parent"-->
+<!--            app:layout_constraintTop_toTopOf="parent" />-->
+
+        <com.airbnb.lottie.LottieAnimationView
+            android:id="@+id/animation_nfcScanning_nfcOff"
+            android:layout_width="match_parent"
+            android:layout_height="400dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.0"
+            app:lottie_autoPlay="true"
+            app:lottie_loop="true"
+            app:lottie_rawRes="@raw/read_card_red" />
+
+        <Button
+            android:id="@+id/button_turnOnNfc"
+            android:layout_width="wrap_content"
+            android:layout_height="55dp"
+            android:paddingHorizontal="40dp"
+            android:text="@string/button_turn_on_nfc"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.97" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <com.airbnb.lottie.LottieAnimationView
+        android:id="@+id/animation_nfcSuccess"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:layout_margin="125dp"
+        android:layout_centerInParent="true"
+        android:visibility="gone"
+        app:lottie_autoPlay="true"
+        app:lottie_loop="false"
+        app:lottie_speed="2"
+        app:lottie_colorFilter="@color/nfc_animation_success"
+        app:lottie_rawRes="@raw/scan_success" />
+
+    <com.airbnb.lottie.LottieAnimationView
+        android:id="@+id/animation_nfcFail"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:layout_margin="125dp"
+        android:layout_centerInParent="true"
+        android:visibility="gone"
+        app:lottie_autoPlay="true"
+        app:lottie_loop="false"
+        app:lottie_speed="2"
+        app:lottie_rawRes="@raw/scan_fail" />
 
     <LinearLayout
         android:id="@+id/linearLayout_addDialogContent"

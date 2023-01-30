@@ -16,6 +16,8 @@
     <!--  dialog_add  -->
     <string name="button_save">Uložit</string>
     <string name="button_cancel">Zrušit</string>
+    <string name="text_view_nfc_off">NFC je vypnuté </string>
+    <string name="button_turn_on_nfc">Zapnout NFC</string>
 
     <!--  list_runners  -->
     <string name="edit_text_runner_id">Číslo běžce</string>

@@ -51,10 +51,9 @@
             android:layout_marginTop="3dp"/>
 
         <TextView
-            android:id="@+id/textView_stationName_var"
+            android:id="@+id/textView_checkpointName_var"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text=""
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -81,7 +80,6 @@
             android:id="@+id/textView_guardName_var"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text=""
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"

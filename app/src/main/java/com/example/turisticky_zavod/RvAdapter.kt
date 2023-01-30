@@ -26,7 +26,7 @@ class RvAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         with (holder) {
             with (peopleList[position]) {
-                binding.textViewRunnerId.text = this.id.toString()
+                binding.textViewRunnerId.text = this.runnerId.toString()
                 binding.textViewRunnerName.text = this.name
                 binding.textViewRunnerTeam.text = this.team
 

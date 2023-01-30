@@ -14,7 +14,7 @@ class NFCHelper {
         val id = readBlock(tag, BLOCK_ID).dropLastWhile { c -> !c.isLetterOrDigit() }.toInt()
         val name = readBlock(tag, BLOCK_NAME).dropLastWhile { c -> !c.isLetterOrDigit() }
         val team = readBlock(tag, BLOCK_TEAM).dropLastWhile { c -> !c.isLetterOrDigit() }
-        return Person(id, name, team)
+        return Person(id, name, team, null)
     }
 
     private fun readBlock(tag: MifareClassic, block: Int): String {
@@ -54,9 +54,9 @@ class NFCHelper {
     }
 
     fun checkNfcAvailability(nfcAdapter: NfcAdapter?): NfcAvailability {
-        return if (nfcAdapter == null)
+        return if (nfcAdapter == null) {
             NfcAvailability.NOT_SUPPORTED
-        else {
+        } else {
             if (nfcAdapter.isEnabled)
                 NfcAvailability.READY
             else
