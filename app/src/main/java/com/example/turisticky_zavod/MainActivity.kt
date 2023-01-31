@@ -1,5 +1,6 @@
 package com.example.turisticky_zavod
 
+import android.annotation.SuppressLint
 import android.content.DialogInterface
 import android.content.Intent
 import android.database.sqlite.SQLiteConstraintException
@@ -9,10 +10,13 @@ import android.nfc.Tag
 import android.nfc.tech.MifareClassic
 import android.os.Bundle
 import android.util.Log
-import android.view.*
+import android.view.Menu
+import android.view.MenuItem
+import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.view.menu.MenuBuilder
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.MenuCompat
 import androidx.core.view.WindowCompat
@@ -22,12 +26,11 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.airbnb.lottie.LottieAnimationView
+import com.example.turisticky_zavod.NFCHelper.NfcAvailability
 import com.example.turisticky_zavod.databinding.ActivityMainBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import java.io.IOException
-import kotlin.collections.ArrayList
-import com.example.turisticky_zavod.NFCHelper.NfcAvailability
 
 
 class MainActivity : AppCompatActivity(), ReaderCallback {
@@ -55,10 +58,11 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
         _binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         setSupportActionBar(binding.toolbar)
+        binding.toolbar.setNavigationOnClickListener { Toast.makeText(this@MainActivity, "lmao", Toast.LENGTH_SHORT).show() }
         binding.recyclerView.layoutManager = LinearLayoutManager(this)
         rvAdapter = RvAdapter(peopleList, object: RvAdapter.OptionsMenuLongClickListener {
             override fun onOptionsMenuLongClicked(position: Int): Boolean {
-                handleListItemClicked(position)
+                handleRecyclerViewItemLongClicked(position)
                 return true
             }
         })
@@ -235,62 +239,70 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
         newPersonDialog.show()
     }
 
-    private fun handleListItemClicked(position: Int) {
-        val popupMenu = PopupMenu(this , binding.recyclerView[position].findViewById(R.id.textView_runnerName))
+    @SuppressLint("RestrictedApi", "DiscouragedPrivateApi")
+    private fun handleRecyclerViewItemLongClicked(position: Int) {
+        val popupMenu = PopupMenu(this@MainActivity, binding.recyclerView[position].findViewById(R.id.textView_runnerName))
         popupMenu.inflate(R.menu.menu_list_item)
-        popupMenu.setOnMenuItemClickListener(object : PopupMenu.OnMenuItemClickListener{
-            override fun onMenuItemClick(item: MenuItem?): Boolean {
-                when (item?.itemId) {
-                    R.id.menuItem_listItemDelete -> {
-                        val builder = MaterialAlertDialogBuilder(this@MainActivity)
-                        builder.setTitle("Smazat položku")
-                        builder.setMessage("Opravdu chcete smazat tuto položku? Změny nelze vrátit")
-                        builder.setCancelable(false)
-                        builder.setNegativeButton("Ne") { dialog: DialogInterface, _: Int -> dialog.cancel() }
-                        builder.setPositiveButton("Ano") { _: DialogInterface?, _: Int ->
+        popupMenu.setOnMenuItemClickListener {
+            when (it.itemId) {
+                R.id.menuItem_listItemDelete -> {
+                    val builder = MaterialAlertDialogBuilder(this@MainActivity)
+                    builder.setTitle("Smazat položku")
+                    builder.setMessage("Opravdu chcete smazat tuto položku? Tato akce nelze vrátit")
+                    builder.setCancelable(false)
+                    builder.setNegativeButton("Ne") { dialog: DialogInterface, _: Int -> dialog.cancel() }
+                    builder.setPositiveButton("Ano") { _: DialogInterface?, _: Int ->
 
-                            val tmpPerson = peopleList[position]
-                            peopleList.remove(tmpPerson)
+                        val tmpPerson = peopleList[position]
+                        peopleList.remove(tmpPerson)
 
-                            if (peopleList.size == 0)
-                                binding.textViewNoData.visibility = View.VISIBLE
+                        if (peopleList.size == 0)
+                            binding.textViewNoData.visibility = View.VISIBLE
 
-                            rvAdapter.notifyItemRemoved(position)
-                            rvAdapter.notifyItemRangeChanged(0, peopleList.size)
+                        rvAdapter.notifyItemRemoved(position)
+                        rvAdapter.notifyItemRangeChanged(0, peopleList.size)
 
-                            deletePerson(tmpPerson)
-                        }
-                        builder.create().show()
-
-                        return true
+                        deletePerson(tmpPerson)
                     }
-                    R.id.menuItem_listItemEdit -> {
-                        Toast.makeText(this@MainActivity , "Position: $position\nSize: ${peopleList.size}" , Toast.LENGTH_SHORT).show()
-                        return true
-                    }
+                    builder.create().show()
+
+                    true
                 }
-                return false
+                R.id.menuItem_listItemEdit -> {
+                    Toast.makeText(this@MainActivity , "Position: $position\nSize: ${peopleList.size}" , Toast.LENGTH_SHORT).show()
+                    true
+                }
+                else -> false
             }
-        })
-        popupMenu.show()
+        }
+        try {
+            val popup = PopupMenu::class.java.getDeclaredField("mPopup")
+            popup.isAccessible = true
+            val menu = popup.get(popupMenu)
+            menu.javaClass
+                .getDeclaredMethod("setForceShowIcon", Boolean::class.java)
+                .invoke(menu, true)
+        } catch (e: Exception) {
+            Toast.makeText(this@MainActivity, e.message, Toast.LENGTH_LONG).show()
+        } finally {
+            popupMenu.show()
+        }
     }
 
+    @SuppressLint("RestrictedApi")
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        // Inflate the menu; this adds items to the action bar if it is present.
+        if (menu is MenuBuilder) menu.setOptionalIconsVisible(true)
         menuInflater.inflate(R.menu.menu_main, menu)
-        MenuCompat.setGroupDividerEnabled(menu, true);
+        MenuCompat.setGroupDividerEnabled(menu, true)
         return true
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         return when (item.itemId) {
             R.id.menuItem_sendDataToPc -> {
-                Toast.makeText(this@MainActivity, if (nfcHelper.checkNfcAvailability(nfcAdapter) == NfcAvailability.OFF) "ne" else "ano", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@MainActivity, "ne", Toast.LENGTH_SHORT).show()
 
-                return true
+                true
             }
             R.id.menuItem_deleteAllData -> {
                 val builder = MaterialAlertDialogBuilder(this)
@@ -308,7 +320,7 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
                 }
                 builder.create().show()
 
-                return true
+                true
             }
             else -> super.onOptionsItemSelected(item)
         }

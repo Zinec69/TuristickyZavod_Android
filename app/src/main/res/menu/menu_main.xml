@@ -6,11 +6,13 @@
     <group android:id="@+id/miscellaneous">
         <item
             android:id="@+id/menuItem_sendDataToPc"
+            android:icon="@drawable/upload"
             android:title="@string/menu_item_send_data_to_pc" />
     </group>
     <group android:id="@+id/delete_data">
         <item
             android:id="@+id/menuItem_deleteAllData"
+            android:icon="@drawable/delete_fill_2"
             android:title="@string/menu_item_delete_all_data" />
     </group>
 </menu>

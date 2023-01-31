@@ -20,13 +20,15 @@
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:fitsSystemWindows="true">
+        android:layout_height="wrap_content">
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize" />
+            android:layout_height="?attr/actionBarSize"
+            app:titleCentered="true"
+            app:navigationIcon="@drawable/menu_24"
+            app:navigationIconTint="@color/runnerInfo"/>
 
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -88,50 +90,31 @@
             app:layout_constraintHorizontal_bias="0.0"
             android:layout_marginStart="110dp" />
 
-        <RelativeLayout
-            android:id="@+id/linearLayout_peopleList"
-            android:orientation="vertical"
-            android:layout_width="385dp"
-            android:layout_height="match_parent"
-            android:layout_marginTop="65dp"
-            app:contentPaddingBottom="5dp"
-            app:contentPaddingTop="5dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textView_guardName">
-
-            <androidx.core.widget.NestedScrollView
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerView"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:fillViewport="true">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
-
-                    <androidx.recyclerview.widget.RecyclerView
-                        android:id="@+id/recyclerView"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:drawSelectorOnTop="false" />
-                </LinearLayout>
-            </androidx.core.widget.NestedScrollView>
-
-        </RelativeLayout>
+                android:drawSelectorOnTop="false"
+                android:layout_marginTop="65dp"
+                android:layout_marginHorizontal="13dp"
+                app:contentPaddingBottom="5dp"
+                app:contentPaddingTop="5dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/textView_guardName" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
         android:id="@+id/fab_add"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_marginEnd="23dp"
         android:layout_marginBottom="23dp"
-        app:srcCompat="@drawable/plus_icon_thick"
-        android:contentDescription="Přidat nový záznam"
-        android:visibility="visible"/>
+        app:icon="@drawable/person_add_fill"
+        android:contentDescription="@string/fab_content_description"
+        android:text="@string/fab" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

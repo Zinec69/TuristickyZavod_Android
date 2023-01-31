@@ -5,9 +5,12 @@
     <!--  MainActivity  -->
     <string name="menu_item_send_data_to_pc">Poslat data do PC</string>
     <string name="menu_item_delete_all_data">Vymazat všechna data</string>
-    <string name="text_view_no_data">Nový záznam přidáte tlačítkem vpravo dole</string>
+<!--    <string name="text_view_no_data">Nový záznam přidáte tlačítkem vpravo dole</string>-->
+    <string name="text_view_no_data">Zatím žádná data</string>
     <string name="text_view_station">Stanoviště:</string>
-    <string name="text_view_guard">Hlídka:</string>
+    <string name="text_view_guard">Rozhodčí:</string>
+    <string name="fab">Nový záznam</string>
+    <string name="fab_content_description">Přidat nový záznam</string>
 
     <!--  menu_list  -->
     <string name="menu_item_edit_item">Upravit</string>
