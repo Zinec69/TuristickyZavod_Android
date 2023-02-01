@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.NFC" />
+    <uses-feature android:name="android.hardware.nfc" android:required="true" />
 
     <application
         android:allowBackup="true"
@@ -14,10 +15,12 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Turisticky_zavod"
         tools:targetApi="31">
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:theme="@style/Theme.Turisticky_zavod">
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -35,5 +38,25 @@
                 android:resource="@xml/nfc_list" />
 
         </activity>
+
+        <activity
+            android:name=".AddActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Turisticky_zavod"
+            android:windowSoftInputMode="adjustPan"
+            android:label="">
+
+            <intent-filter>
+                <action android:name="android.nfc.action.NDEF_DISCOVERED" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.nfc.action.TECH_DISCOVERED"
+                android:resource="@xml/nfc_list" />
+
+        </activity>
+
     </application>
 </manifest>

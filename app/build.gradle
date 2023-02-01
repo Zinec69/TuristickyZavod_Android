@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId "com.example.turisticky_zavod"
-        minSdk 21
+        minSdk 24
         targetSdk 33
         versionCode 1
         versionName "1.0"
@@ -40,8 +40,8 @@ dependencies {
     // defaults
     implementation 'androidx.core:core-ktx:1.9.0'
     implementation 'androidx.appcompat:appcompat:1.6.0'
-    implementation 'com.google.android.material:material:1.9.0-alpha01'
-//    implementation 'com.google.android.material:material:1.7.0'
+//    implementation 'com.google.android.material:material:1.9.0-alpha01'
+    implementation 'com.google.android.material:material:1.7.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'androidx.navigation:navigation-fragment-ktx:2.5.3'
     implementation 'androidx.navigation:navigation-ui-ktx:2.5.3'

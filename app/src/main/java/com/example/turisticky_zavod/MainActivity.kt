@@ -1,6 +1,8 @@
 package com.example.turisticky_zavod
 
 import android.annotation.SuppressLint
+import android.app.Activity
+import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
 import android.database.sqlite.SQLiteConstraintException
@@ -9,11 +11,14 @@ import android.nfc.NfcAdapter.*
 import android.nfc.Tag
 import android.nfc.tech.MifareClassic
 import android.os.Bundle
+import android.text.Editable
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.*
+import androidx.activity.result.contract.ActivityResultContract
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.view.menu.MenuBuilder
@@ -31,6 +36,7 @@ import com.example.turisticky_zavod.databinding.ActivityMainBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import java.io.IOException
+import java.util.concurrent.Executors
 
 
 class MainActivity : AppCompatActivity(), ReaderCallback {
@@ -51,6 +57,22 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
     private lateinit var newPersonDialog: AlertDialog
     private lateinit var cancelDialog: AlertDialog
 
+    private var activityResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val data: Intent? = result.data
+            Thread {
+                val person = db.personDao().getLast()
+                runOnUiThread {
+                    peopleList.add(0, person)
+                        rvAdapter.notifyItemInserted(0)
+                        rvAdapter.notifyItemRangeChanged(0, peopleList.size)
+                    if (peopleList.size == 1)
+                        binding.textViewNoData.visibility = View.GONE
+                }
+            }.start()
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         super.onCreate(savedInstanceState)
@@ -69,25 +91,23 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
         binding.recyclerView.adapter = rvAdapter
 
         nfcAdapter = getDefaultAdapter(this@MainActivity)
+        if (nfcAdapter == null) {
+            Toast.makeText(this@MainActivity, "Váš telefon nemá NFC", Toast.LENGTH_LONG).show()
+            finish()
+        }
 
         db = Room.databaseBuilder(this@MainActivity, TZDatabase::class.java, "tz.db")
+            .fallbackToDestructiveMigration()
             .addCallback( object : RoomDatabase.Callback() {
                 override fun onCreate(db: SupportSQLiteDatabase) {
                     super.onCreate(db)
-                    this@MainActivity.db.checkpointDao().apply {
-                        insert(Checkpoint("Stavba stanu", false, null))
-                        insert(Checkpoint("Orientace mapy", false, null))
-                        insert(Checkpoint("Lanová lávka", false, null))
-                        insert(Checkpoint("Uzly", false, null))
-                        insert(Checkpoint("Míček", false, null))
-                        insert(Checkpoint("Plížení", false, null))
-                        insert(Checkpoint("Turistické a topografické", false, null))
-                        insert(Checkpoint("Určování dřevin", false, null))
-                        insert(Checkpoint("Kulturně poznávací", false, null))
-                    }
+                    populateCheckpoints()
+                }
+                override fun onDestructiveMigration(db: SupportSQLiteDatabase) {
+                    super.onDestructiveMigration(db)
+                    populateCheckpoints()
                 }
             })
-            .fallbackToDestructiveMigration()
             .build()
 
         binding.fabAdd.setOnClickListener {
@@ -95,29 +115,8 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
         }
 
         newPersonDialogView = layoutInflater.inflate(R.layout.dialog_add, null)
-        newPersonDialog = MaterialAlertDialogBuilder(this@MainActivity)
-            .setView(newPersonDialogView)
-            .setCancelable(true)
-            .setOnDismissListener {
-                nfcAdapter!!.disableReaderMode(this@MainActivity)
-                newPersonDialogView.findViewById<ImageView>(R.id.animation_nfcScanning).visibility = View.VISIBLE
-                newPersonDialogView.findViewById<LinearLayout>(R.id.linearLayout_addDialogContent).visibility = View.GONE
-                newPersonDialogView.findViewById<LinearLayout>(R.id.linearLayout).visibility = View.GONE
-                newPersonDialog.setCancelable(true)
-            }
-            .create()
-        cancelDialog = MaterialAlertDialogBuilder(this@MainActivity)
-            .setTitle("Zrušit")
-            .setMessage("Opravdu chcete odejít? Provedené změny nebudou uloženy")
-            .setCancelable(false)
-            .setNegativeButton("Ne") { dialog: DialogInterface, _: Int -> dialog.cancel() }
-            .setPositiveButton("Ano") { _: DialogInterface, _: Int ->
-                newPersonDialogView.findViewById<TextInputEditText>(R.id.editText_RunnerId).setText("")
-                newPersonDialogView.findViewById<TextInputEditText>(R.id.editText_RunnerName).setText("")
-                newPersonDialogView.findViewById<TextInputEditText>(R.id.editText_RunnerTeam).setText("")
-                newPersonDialog.dismiss()
-            }
-            .create()
+        initNewPersonDialog()
+        initCancelDialog()
 
         loadPeople()
     }
@@ -140,16 +139,16 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
                 }
 
                 runOnUiThread {
-                    scanSuccess()
+                    scanSuccess(person)
 
-                    try {
-                        newPersonDialogView.findViewById<TextInputEditText>(R.id.editText_RunnerId).setText(person.runnerId.toString())
-                        newPersonDialogView.findViewById<TextInputEditText>(R.id.editText_RunnerName).setText(person.name)
-                        newPersonDialogView.findViewById<TextInputEditText>(R.id.editText_RunnerTeam).setText(person.team)
-                    } catch (e: Exception) {
-                        Toast.makeText(this@MainActivity, "Chyba při vkládání informací do textových polí", Toast.LENGTH_LONG).show()
-                        Log.d("NFC", e.stackTraceToString())
-                    }
+//                    try {
+//                        newPersonDialogView.findViewById<TextInputEditText>(R.id.editText_RunnerId).setText(person.runnerId.toString())
+//                        newPersonDialogView.findViewById<TextInputEditText>(R.id.editText_RunnerName).setText(person.name)
+//                        newPersonDialogView.findViewById<TextInputEditText>(R.id.editText_RunnerTeam).setText(person.team)
+//                    } catch (e: Exception) {
+//                        Toast.makeText(this@MainActivity, "Chyba při vkládání informací do textových polí", Toast.LENGTH_LONG).show()
+//                        Log.d("NFC", e.stackTraceToString())
+//                    }
                 }
             } catch (e: Exception) {
                 runOnUiThread {
@@ -170,15 +169,19 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
         }
     }
 
-    private fun scanSuccess() {
+    private fun scanSuccess(person: Person) {
         newPersonDialogView.findViewById<LottieAnimationView>(R.id.animation_nfcScanning).visibility = View.GONE
         val animation = newPersonDialogView.findViewById<LottieAnimationView>(R.id.animation_nfcSuccess)
         animation.visibility = View.VISIBLE
-        animation.animate().setDuration(500).withEndAction {
+        animation.animate().setDuration(700).withEndAction {
+            val intent = Intent(this@MainActivity, AddActivity::class.java)
+            intent.putExtra("id", person.runnerId.toString())
+            intent.putExtra("name", person.name)
+            intent.putExtra("team", person.team)
+            activityResultLauncher.launch(intent)
+//            startActivity(intent)
+            newPersonDialog.dismiss()
             animation.visibility = View.GONE
-            newPersonDialogView.findViewById<LinearLayout>(R.id.linearLayout_addDialogContent).visibility = View.VISIBLE
-            newPersonDialogView.findViewById<LinearLayout>(R.id.linearLayout).visibility = View.VISIBLE
-            newPersonDialog.setCancelable(false)
         }.start()
     }
 
@@ -196,30 +199,6 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
     }
 
     private fun handleAddingNewPerson() {
-        newPersonDialogView.findViewById<Button>(R.id.button_save).setOnClickListener {
-            val id = newPersonDialogView.findViewById<TextInputEditText>(R.id.editText_RunnerId)
-            val name = newPersonDialogView.findViewById<TextInputEditText>(R.id.editText_RunnerName)
-            val team = newPersonDialogView.findViewById<TextInputEditText>(R.id.editText_RunnerTeam)
-
-            val person = Person(id.text.toString().takeWhile { c -> c.isDigit() }.toInt(), name.text.toString(), team.text.toString(), null)
-
-            peopleList.add(0, person)
-            rvAdapter.notifyItemInserted(0)
-            rvAdapter.notifyItemRangeChanged(0, peopleList.size)
-
-            id.setText("")
-            name.setText("")
-            team.setText("")
-
-            if (peopleList.size == 1)
-                binding.textViewNoData.visibility = View.GONE
-
-            addNewPerson(person)
-
-            newPersonDialog.dismiss()
-        }
-        newPersonDialogView.findViewById<Button>(R.id.button_cancel).setOnClickListener { cancelDialog.show() }
-
         if (nfcHelper.checkNfcAvailability(nfcAdapter) == NfcAvailability.OFF) {
             newPersonDialogView.findViewById<Button>(R.id.button_turnOnNfc)
                 .setOnClickListener {
@@ -341,11 +320,13 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
             Thread {
                 val people = db.personDao().getAll()
                 if (people.isNotEmpty()) {
-                    for (person in people) {
-                        peopleList.add(0, person)
+                    runOnUiThread {
+                        for (person in people) {
+                            peopleList.add(0, person)
+                        }
+                        rvAdapter.notifyItemRangeInserted(0, people.size)
+                        binding.textViewNoData.visibility = View.GONE
                     }
-                    rvAdapter.notifyItemRangeInserted(0, people.size)
-                    binding.textViewNoData.visibility = View.GONE
                 }
             }.start()
         }
@@ -355,20 +336,81 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
         Thread {
             try {
                 db.personDao().insert(person)
-            } catch (e: SQLiteConstraintException) {
+            } catch (e: Exception) {
                 runOnUiThread {
-                    Toast.makeText(this@MainActivity, "exception caught like a boss", Toast.LENGTH_LONG).show()
+                    Log.d("DB", e.stackTraceToString())
+                    Toast.makeText(this@MainActivity, "Chyba při ukládání záznamu", Toast.LENGTH_LONG).show()
                 }
             }
         }.start()
     }
 
     private fun deletePerson(person: Person) {
-        Thread { db.personDao().delete(person) }.start()
+        Thread {
+            try {
+                db.personDao().delete(person)
+            } catch (e: Exception) {
+                runOnUiThread {
+                    Log.d("DB", e.stackTraceToString())
+                    Toast.makeText(this@MainActivity, "Chyba při mazání záznamu", Toast.LENGTH_LONG).show()
+                }
+            }
+        }.start()
     }
 
     private fun deleteAllPeople() {
-        Thread { db.personDao().deleteAll() }.start()
+        Thread {
+            try {
+                db.personDao().deleteAll()
+            } catch (e: Exception) {
+                runOnUiThread {
+                    Log.d("DB", e.stackTraceToString())
+                    Toast.makeText(this@MainActivity, "Chyba při mazání záznamů", Toast.LENGTH_LONG).show()
+                }
+            }
+        }.start()
+    }
+
+    private fun initNewPersonDialog() {
+        newPersonDialog = MaterialAlertDialogBuilder(this@MainActivity)
+            .setView(newPersonDialogView)
+            .setCancelable(true)
+            .setOnDismissListener {
+                nfcAdapter!!.disableReaderMode(this@MainActivity)
+                newPersonDialogView.findViewById<ImageView>(R.id.animation_nfcScanning).visibility = View.VISIBLE
+            }
+            .create()
+    }
+
+    private fun initCancelDialog() {
+        cancelDialog = MaterialAlertDialogBuilder(this@MainActivity)
+            .setTitle("Zrušit")
+            .setMessage("Opravdu chcete odejít? Provedené změny nebudou uloženy")
+            .setCancelable(false)
+            .setNegativeButton("Ne") { dialog: DialogInterface, _: Int -> dialog.cancel() }
+            .setPositiveButton("Ano") { _: DialogInterface, _: Int ->
+                newPersonDialogView.findViewById<TextInputEditText>(R.id.editText_runnerId).setText("")
+                newPersonDialogView.findViewById<TextInputEditText>(R.id.editText_runnerName).setText("")
+                newPersonDialogView.findViewById<TextInputEditText>(R.id.editText_runnerTeam).setText("")
+                newPersonDialog.dismiss()
+            }
+            .create()
+    }
+
+    private fun populateCheckpoints() {
+        Thread {
+            db.checkpointDao().apply {
+                insert(Checkpoint("Stavba stanu", false, null))
+                insert(Checkpoint("Orientace mapy", false, null))
+                insert(Checkpoint("Lanová lávka", false, null))
+                insert(Checkpoint("Uzly", false, null))
+                insert(Checkpoint("Míček", false, null))
+                insert(Checkpoint("Plížení", false, null))
+                insert(Checkpoint("Turistické a topografické", false, null))
+                insert(Checkpoint("Určování dřevin", false, null))
+                insert(Checkpoint("Kulturně poznávací", false, null))
+            }
+        }.start()
     }
 
     override fun onDestroy() {

@@ -6,4 +6,5 @@
     <color name="divider_horizontal">#809C9C9C</color>
     <color name="card_view_stroke">#40747474</color>
     <color name="nfc_animation_success">#1CC200</color>
+    <color name="list_item_ripple">#C6B3FF</color>
 </resources>

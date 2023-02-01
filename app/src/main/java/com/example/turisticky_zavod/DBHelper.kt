@@ -7,13 +7,15 @@ data class Person(
     val runnerId: Int,
     val name: String?,
     val team: String?,
+    @ColumnInfo(defaultValue = "0") val penaltySeconds: Int? = 0,
+    @ColumnInfo(defaultValue = "0") val disqualified: Boolean? = false,
     @PrimaryKey(autoGenerate = true) val id: Int?
 )
 
 @Entity
 data class Checkpoint(
     val name: String,
-    val active: Boolean? = false,
+    @ColumnInfo(defaultValue = "0") val active: Boolean? = false,
     @PrimaryKey(autoGenerate = true) val id: Int?
 )
 
@@ -24,6 +26,12 @@ interface PersonDao {
 
     @Query("SELECT * FROM person WHERE runnerId = :id")
     fun getByID(id: Int): Person
+
+    @Query("SELECT * FROM person ORDER BY id DESC LIMIT 1")
+    fun getLast(): Person
+
+    @Query("SELECT * FROM person ORDER BY id DESC LIMIT :n")
+    fun getNLast(n: Int): Person
 
     @Insert
     fun insert(person: Person)
@@ -56,7 +64,7 @@ interface CheckpointDao {
     fun deleteAll()
 }
 
-@Database(entities = [Person::class, Checkpoint::class], version = 6)
+@Database(entities = [Person::class, Checkpoint::class], version = 9)
 abstract class TZDatabase : RoomDatabase() {
     abstract fun personDao(): PersonDao
     abstract fun checkpointDao(): CheckpointDao
