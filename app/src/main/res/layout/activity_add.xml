@@ -26,12 +26,12 @@
     </com.google.android.material.appbar.AppBarLayout>
 
     <com.google.android.material.card.MaterialCardView
-        android:id="@+id/cardView_disqualifiedxd"
+        android:id="@+id/cardView_disqualified"
         style="@style/Widget.Material3.CardView.Elevated"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="end"
-        android:layout_marginTop="5dp"
+        android:layout_marginTop="7dp"
         android:layout_marginEnd="20dp"
         android:visibility="visible"
         app:cardCornerRadius="20dp">
@@ -50,12 +50,16 @@
                 android:layout_marginStart="10dp"
                 android:layout_marginEnd="15dp"
                 android:gravity="center"
-                android:text="Diskvalifikován"></TextView>
+                android:text="Diskvalifikován">
+
+            </TextView>
 
             <com.google.android.material.materialswitch.MaterialSwitch
-                android:id="@+id/switch_disqualifiedxd"
+                android:id="@+id/switch_disqualified"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:scaleX="0.95"
+                android:scaleY="0.95"
                 android:contextClickable="true">
 
             </com.google.android.material.materialswitch.MaterialSwitch>
@@ -68,8 +72,7 @@
         android:id="@+id/nestedScrollView_content"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="?attr/actionBarSize"
-        android:layout_marginBottom="85dp">
+        android:layout_marginTop="?attr/actionBarSize">
 
         <LinearLayout
             android:id="@+id/linearLayout_scrollViewContent"
@@ -78,67 +81,13 @@
             android:orientation="vertical"
             android:paddingHorizontal="20dp">
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical|end"
-                android:orientation="horizontal"
-                android:paddingTop="5dp"
-                android:paddingBottom="10dp"
-                android:visibility="visible">
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chip"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="10dp"
-                    android:checkable="true"
-                    android:text="Diskvalifikován"
-                    app:chipIcon="@drawable/disabled_outline" />
-
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/cardView_disqualified"
-                    style="@style/Widget.Material3.CardView.Elevated"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="end"
-                    app:cardCornerRadius="20dp">
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:paddingHorizontal="10dp"
-                        android:paddingVertical="2dp">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="match_parent"
-                            android:layout_gravity="end"
-                            android:layout_marginStart="10dp"
-                            android:layout_marginEnd="15dp"
-                            android:gravity="center"
-                            android:text="Diskvalifikován"></TextView>
-
-                        <com.google.android.material.materialswitch.MaterialSwitch
-                            android:id="@+id/switch_disqualified"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:contextClickable="true">
-
-                        </com.google.android.material.materialswitch.MaterialSwitch>
-
-                    </LinearLayout>
-
-                </com.google.android.material.card.MaterialCardView>
-
-            </LinearLayout>
-
             <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardView_runnerInfo"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 style="@style/Widget.Material3.CardView.Elevated"
-                app:cardCornerRadius="20dp">
+                app:cardCornerRadius="20dp"
+                android:layout_marginTop="5dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -230,6 +179,7 @@
             </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardView_penalty"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"

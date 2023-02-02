@@ -2,22 +2,20 @@ package com.example.turisticky_zavod
 
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
-import android.database.sqlite.SQLiteConstraintException
 import android.nfc.NfcAdapter
 import android.nfc.NfcAdapter.*
 import android.nfc.Tag
+import android.nfc.TagLostException
 import android.nfc.tech.MifareClassic
+import android.os.Build
 import android.os.Bundle
-import android.text.Editable
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.*
-import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -36,7 +34,6 @@ import com.example.turisticky_zavod.databinding.ActivityMainBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import java.io.IOException
-import java.util.concurrent.Executors
 
 
 class MainActivity : AppCompatActivity(), ReaderCallback {
@@ -59,13 +56,15 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
 
     private var activityResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            val data: Intent? = result.data
             Thread {
+                Thread.sleep(100)
                 val person = db.personDao().getLast()
                 runOnUiThread {
                     peopleList.add(0, person)
-                        rvAdapter.notifyItemInserted(0)
-                        rvAdapter.notifyItemRangeChanged(0, peopleList.size)
+
+                    rvAdapter.notifyItemInserted(0)
+                    rvAdapter.notifyItemRangeChanged(0, peopleList.size)
+
                     if (peopleList.size == 1)
                         binding.textViewNoData.visibility = View.GONE
                 }
@@ -127,7 +126,11 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
             try {
                 ndef.connect()
 
+                val start = System.currentTimeMillis()
+
                 val person = nfcHelper.readPerson(ndef)
+
+                Log.d("NFC DEBUG READ", "${System.currentTimeMillis() - start}ms")
 
                 for (p in peopleList) {
                     if (p.runnerId == person.runnerId) {
@@ -140,15 +143,10 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
 
                 runOnUiThread {
                     scanSuccess(person)
-
-//                    try {
-//                        newPersonDialogView.findViewById<TextInputEditText>(R.id.editText_RunnerId).setText(person.runnerId.toString())
-//                        newPersonDialogView.findViewById<TextInputEditText>(R.id.editText_RunnerName).setText(person.name)
-//                        newPersonDialogView.findViewById<TextInputEditText>(R.id.editText_RunnerTeam).setText(person.team)
-//                    } catch (e: Exception) {
-//                        Toast.makeText(this@MainActivity, "Chyba při vkládání informací do textových polí", Toast.LENGTH_LONG).show()
-//                        Log.d("NFC", e.stackTraceToString())
-//                    }
+                }
+            } catch (e: TagLostException) {
+                runOnUiThread {
+                    scanFail(e, "Čip byl odebrán příliš rychle")
                 }
             } catch (e: Exception) {
                 runOnUiThread {
@@ -171,15 +169,15 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
 
     private fun scanSuccess(person: Person) {
         newPersonDialogView.findViewById<LottieAnimationView>(R.id.animation_nfcScanning).visibility = View.GONE
+
         val animation = newPersonDialogView.findViewById<LottieAnimationView>(R.id.animation_nfcSuccess)
         animation.visibility = View.VISIBLE
         animation.animate().setDuration(700).withEndAction {
             val intent = Intent(this@MainActivity, AddActivity::class.java)
-            intent.putExtra("id", person.runnerId.toString())
-            intent.putExtra("name", person.name)
-            intent.putExtra("team", person.team)
+                .putExtra("person", person)
+
             activityResultLauncher.launch(intent)
-//            startActivity(intent)
+
             newPersonDialog.dismiss()
             animation.visibility = View.GONE
         }.start()
@@ -187,6 +185,7 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
 
     private fun scanFail(e: Exception?, mess: String) {
         newPersonDialogView.findViewById<LottieAnimationView>(R.id.animation_nfcScanning).visibility = View.GONE
+
         val animation = newPersonDialogView.findViewById<LottieAnimationView>(R.id.animation_nfcFail)
         animation.visibility = View.VISIBLE
         animation.animate().setDuration(2000).withEndAction {
@@ -225,25 +224,14 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
         popupMenu.setOnMenuItemClickListener {
             when (it.itemId) {
                 R.id.menuItem_listItemDelete -> {
-                    val builder = MaterialAlertDialogBuilder(this@MainActivity)
-                    builder.setTitle("Smazat položku")
-                    builder.setMessage("Opravdu chcete smazat tuto položku? Tato akce nelze vrátit")
-                    builder.setCancelable(false)
-                    builder.setNegativeButton("Ne") { dialog: DialogInterface, _: Int -> dialog.cancel() }
-                    builder.setPositiveButton("Ano") { _: DialogInterface?, _: Int ->
-
-                        val tmpPerson = peopleList[position]
-                        peopleList.remove(tmpPerson)
-
-                        if (peopleList.size == 0)
-                            binding.textViewNoData.visibility = View.VISIBLE
-
-                        rvAdapter.notifyItemRemoved(position)
-                        rvAdapter.notifyItemRangeChanged(0, peopleList.size)
-
-                        deletePerson(tmpPerson)
-                    }
-                    builder.create().show()
+                    MaterialAlertDialogBuilder(this@MainActivity)
+                        .setTitle("Smazat položku")
+                        .setMessage("Opravdu chcete smazat tuto položku? Tato akce nelze vrátit")
+                        .setCancelable(false)
+                        .setNegativeButton("Ne") { dialog: DialogInterface, _: Int -> dialog.cancel() }
+                        .setPositiveButton("Ano") { _: DialogInterface?, _: Int -> deletePerson(position) }
+                        .create()
+                        .show()
 
                     true
                 }
@@ -284,20 +272,14 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
                 true
             }
             R.id.menuItem_deleteAllData -> {
-                val builder = MaterialAlertDialogBuilder(this)
-                builder.setTitle("Vymazat všechna data")
-                builder.setMessage("Opravdu chcete vymazat všechna data? Změny nelze vrátit")
-                builder.setCancelable(false)
-                builder.setNegativeButton("Ne") { dialog: DialogInterface, _: Int -> dialog.cancel() }
-                builder.setPositiveButton("Ano") { _: DialogInterface?, _: Int ->
-                    val size = peopleList.size
-                    peopleList.clear()
-                    rvAdapter.notifyItemRangeRemoved(0, size)
-                    binding.textViewNoData.visibility = View.VISIBLE
-
-                    deleteAllPeople()
-                }
-                builder.create().show()
+                MaterialAlertDialogBuilder(this)
+                    .setTitle("Vymazat všechna data")
+                    .setMessage("Opravdu chcete vymazat všechna data? Změny nelze vrátit")
+                    .setCancelable(false)
+                    .setNegativeButton("Ne") { dialog: DialogInterface, _: Int -> dialog.cancel() }
+                    .setPositiveButton("Ano") { _: DialogInterface?, _: Int -> deleteAllPeople() }
+                    .create()
+                    .show()
 
                 true
             }
@@ -332,23 +314,19 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
         }
     }
 
-    private fun addNewPerson(person: Person) {
+    private fun deletePerson(position: Int) {
         Thread {
             try {
-                db.personDao().insert(person)
-            } catch (e: Exception) {
+                db.personDao().delete(peopleList[position])
                 runOnUiThread {
-                    Log.d("DB", e.stackTraceToString())
-                    Toast.makeText(this@MainActivity, "Chyba při ukládání záznamu", Toast.LENGTH_LONG).show()
-                }
-            }
-        }.start()
-    }
+                    peopleList.remove(peopleList[position])
 
-    private fun deletePerson(person: Person) {
-        Thread {
-            try {
-                db.personDao().delete(person)
+                    rvAdapter.notifyItemRemoved(position)
+                    rvAdapter.notifyItemRangeChanged(position, peopleList.size - position)
+
+                    if (peopleList.size == 0)
+                        binding.textViewNoData.visibility = View.VISIBLE
+                }
             } catch (e: Exception) {
                 runOnUiThread {
                     Log.d("DB", e.stackTraceToString())
@@ -362,6 +340,13 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
         Thread {
             try {
                 db.personDao().deleteAll()
+                runOnUiThread {
+                    val size = peopleList.size
+                    peopleList.clear()
+
+                    rvAdapter.notifyItemRangeRemoved(0, size)
+                    binding.textViewNoData.visibility = View.VISIBLE
+                }
             } catch (e: Exception) {
                 runOnUiThread {
                     Log.d("DB", e.stackTraceToString())

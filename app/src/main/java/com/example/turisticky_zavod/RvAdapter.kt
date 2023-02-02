@@ -30,6 +30,8 @@ class RvAdapter(
                 binding.textViewRunnerName.text = this.name
                 binding.textViewRunnerTeam.text = this.team
 
+                binding.imageViewDisqualified.visibility = if (disqualified) View.VISIBLE else View.GONE
+
                 binding.cardView.setOnLongClickListener {
                     optionsMenuLongClickListener.onOptionsMenuLongClicked(position)
                 }

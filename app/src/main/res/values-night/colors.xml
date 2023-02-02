@@ -7,4 +7,6 @@
     <color name="card_view_stroke">#3F394E</color>
     <color name="nfc_animation_success">#1EDD4D</color>
     <color name="list_item_ripple">#524577</color>
+    <color name="background_layout_normal">#1C1B1F</color>
+    <color name="background_layout_disqualified">#806A2E2E</color>
 </resources>
