@@ -79,7 +79,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingHorizontal="20dp">
+            android:paddingHorizontal="20dp"
+            android:paddingBottom="85dp">
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardView_runnerInfo"
@@ -156,6 +157,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="5dp"
+                        android:layout_marginBottom="2dp"
                         android:textColorHint="?attr/colorPrimaryDark"
                         app:boxCornerRadiusTopEnd="10dp"
                         app:boxCornerRadiusTopStart="10dp"
@@ -245,7 +247,6 @@
 
             </com.google.android.material.card.MaterialCardView>
 
-
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
@@ -254,7 +255,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:paddingHorizontal="35dp"
+        android:paddingHorizontal="30dp"
         android:paddingVertical="10dp"
         android:orientation="horizontal">
 
@@ -264,7 +265,7 @@
             android:layout_width="0dp"
             android:layout_height="60dp"
             android:layout_marginEnd="5dp"
-            android:layout_weight="3"
+            android:layout_weight="4"
             android:text="@string/button_cancel" />
 
         <Button
@@ -272,9 +273,19 @@
             android:layout_width="0dp"
             android:layout_height="65dp"
             android:layout_marginStart="5dp"
-            android:layout_marginEnd="5dp"
-            android:layout_weight="5"
+            android:layout_marginEnd="10dp"
+            android:layout_weight="8"
             android:text="@string/button_save" />
+
+        <Button
+            android:id="@+id/button_addToQueue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            style="?attr/materialIconButtonFilledStyle"
+            app:icon="@drawable/group_add_fill"
+            android:paddingHorizontal="17dp"
+            android:paddingVertical="13dp" />
+
     </LinearLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

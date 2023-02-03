@@ -40,8 +40,7 @@ dependencies {
     // defaults
     implementation 'androidx.core:core-ktx:1.9.0'
     implementation 'androidx.appcompat:appcompat:1.6.0'
-//    implementation 'com.google.android.material:material:1.9.0-alpha01'
-    implementation 'com.google.android.material:material:1.7.0'
+    implementation "com.google.android.material:material:$rootProject.material_version"
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'androidx.navigation:navigation-fragment-ktx:2.5.3'
     implementation 'androidx.navigation:navigation-ui-ktx:2.5.3'
@@ -51,15 +50,17 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 
     // room
-    def room_version = "2.5.0"
-
-    implementation "androidx.room:room-runtime:$room_version"
-    annotationProcessor "androidx.room:room-compiler:$room_version"
-
-    kapt "androidx.room:room-compiler:$room_version"
+    implementation "androidx.room:room-runtime:$rootProject.room_version"
+    annotationProcessor "androidx.room:room-compiler:$rootProject.room_version"
+    kapt "androidx.room:room-compiler:$rootProject.room_version"
+    implementation "androidx.room:room-ktx:$rootProject.room_version"
 
     // lottie
-    def lottie_version = "5.2.0"
+    implementation "com.airbnb.android:lottie:$rootProject.lottie_version"
 
-    implementation "com.airbnb.android:lottie:$lottie_version"
+    // lifecycle
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$rootProject.lifecycle_version"
+    implementation "androidx.lifecycle:lifecycle-livedata-ktx:$rootProject.lifecycle_version"
+    implementation "androidx.lifecycle:lifecycle-common-java8:$rootProject.lifecycle_version"
+
 }

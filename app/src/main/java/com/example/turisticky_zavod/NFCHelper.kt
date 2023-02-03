@@ -50,6 +50,7 @@ class NFCHelper {
             allStrArray[4] == "1",
             allStrArray[5].toLong(),
             if (allStrArray[6] == "0") null else allStrArray[6].toLong(),
+            allStrArray[7].toInt(),
             null
         )
     }
@@ -64,7 +65,7 @@ class NFCHelper {
 
     fun writePersonOnTag(tag: MifareClassic, person: Person) {
         val allStr = "${person.runnerId};${person.name};${person.team};${person.penaltySeconds};" +
-                "${if (person.disqualified) 1 else 0};${person.startTime};${person.finishTime ?: 0}"
+                "${if (person.disqualified) 1 else 0};${person.startTime};${person.finishTime ?: 0};${person.timeWaited}"
         val allByteArrays = stringToByteArraySplits(allStr)
         val arraySizeStr = allByteArrays.size.toString().toByteArray(Charset.forName("ISO-8859-2"))
         val arraySizeBytes = ByteArray(16) { i -> if (i < arraySizeStr.size) arraySizeStr[i] else 0 }

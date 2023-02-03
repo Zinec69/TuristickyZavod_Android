@@ -2,52 +2,53 @@ package com.example.turisticky_zavod
 
 import android.content.DialogInterface
 import android.content.Intent
-import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.TransitionDrawable
 import android.nfc.NfcAdapter
 import android.nfc.NfcAdapter.*
 import android.nfc.Tag
+import android.nfc.TagLostException
+import android.nfc.tech.MifareClassic
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.view.inputmethod.InputMethodManager
-import android.widget.LinearLayout
-import android.widget.NumberPicker
-import android.widget.Toast
+import android.widget.*
 import androidx.activity.addCallback
-import androidx.annotation.RequiresApi
+import androidx.activity.viewModels
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.ViewCompat
 import androidx.core.view.children
-import androidx.room.Room
-import androidx.room.RoomDatabase
-import androidx.sqlite.db.SupportSQLiteDatabase
+import com.airbnb.lottie.LottieAnimationView
 import com.example.turisticky_zavod.databinding.ActivityAddBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import java.io.IOException
 
 class AddActivity : AppCompatActivity(), ReaderCallback {
 
-    private var _binding: ActivityAddBinding? = null
-    private val binding get() = _binding!!
+    private lateinit var binding: ActivityAddBinding
 
     private var nfcAdapter: NfcAdapter? = null
+    private var nfcHelper = NFCHelper()
+    
+    private lateinit var scanDialogView: View
+    private lateinit var scanDialog: AlertDialog
 
-    private lateinit var db: TZDatabase
+    private var peopleQueue = ArrayList<Pair<Person, Long?>>()
 
-    private var peopleQueue = ArrayList<Person>()
+    private val viewModel: PersonViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        _binding = ActivityAddBinding.inflate(layoutInflater)
+        binding = ActivityAddBinding.inflate(layoutInflater)
         setContentView(binding.root)
         setSupportActionBar(binding.toolbarAdd)
 
         nfcAdapter = getDefaultAdapter(this@AddActivity)
-
-        db = Room.databaseBuilder(this@AddActivity, TZDatabase::class.java, "tz.db").build()
 
         onBackPressedDispatcher.addCallback(this@AddActivity) { handleBackButtonPressed() }
         binding.toolbarAdd.setNavigationOnClickListener { handleBackButtonPressed() }
@@ -64,7 +65,7 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
         binding.editTextRunnerTeam.setText(person.team)
         binding.switchDisqualified.isChecked = person.disqualified
 
-        peopleQueue.add(person)
+        peopleQueue.add(Pair(person, null))
 
 //        binding.textViewPenaltyMinutes.alpha = 0f
 //        binding.textViewPenaltyMinutes.x -= 60f
@@ -119,6 +120,11 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
             transitionLayout.reverseTransition(500)
             transitionToolbar.reverseTransition(500)
         }
+
+        binding.buttonAddToQueue.setOnClickListener { scanForNewPerson() }
+
+        scanDialogView = layoutInflater.inflate(R.layout.dialog_add, null)
+        initScanDialog()
     }
 
     private fun save() {
@@ -128,33 +134,152 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
         val penaltySeconds = binding.numberPickerSecond.value
         val penalty = penaltyMinutes * 60 + penaltySeconds * 5
 
-        val person = peopleQueue[0]
+        val person = peopleQueue[0].first
+        val holdup = peopleQueue[0].second
         person.disqualified = disqualified
         person.penaltySeconds += penalty
+        if (holdup != null)
+            person.timeWaited += (System.currentTimeMillis() - holdup).toInt()
 
-        addNewPerson(person)
+        viewModel.addPerson(person)
 
-        setResult(RESULT_OK)
-        finish()
-    }
+        peopleQueue.removeAt(0)
 
-    override fun onTagDiscovered(tag: Tag?) {
-        runOnUiThread {
-            Toast.makeText(this@AddActivity, "lmao", Toast.LENGTH_SHORT).show()
+        if (peopleQueue.isEmpty()) {
+            setResult(RESULT_OK)
+            finish()
+        } else {
+            handleNewPerson()
         }
     }
 
-    private fun addNewPerson(person: Person) {
-        Thread {
+    private fun handleNewPerson() {
+        val person = peopleQueue[0].first
+        binding.editTextRunnerId.animate().alpha(0f).setDuration(200).withEndAction {
+            binding.editTextRunnerId.setText(person.runnerId.toString())
+            binding.editTextRunnerId.animate().alpha(1f).setDuration(200).start()
+        }.start()
+        binding.editTextRunnerName.animate().alpha(0f).setDuration(200).withEndAction {
+            binding.editTextRunnerName.setText(person.name)
+            binding.editTextRunnerName.animate().alpha(1f).setDuration(200).start()
+        }.start()
+        binding.editTextRunnerTeam.animate().alpha(0f).setDuration(200).withEndAction {
+            binding.editTextRunnerTeam.setText(person.team)
+            binding.editTextRunnerTeam.animate().alpha(1f).setDuration(200).start()
+        }.start()
+        binding.numberPickerMinute.animate().alpha(0f).setDuration(200).withEndAction {
+            binding.numberPickerMinute.value = 0
+            binding.numberPickerMinute.animate().alpha(1f).setDuration(200).start()
+        }.start()
+        binding.numberPickerSecond.animate().alpha(0f).setDuration(200).withEndAction {
+            binding.numberPickerSecond.value = 0
+            binding.numberPickerSecond.animate().alpha(1f).setDuration(200).start()
+        }.start()
+        binding.switchDisqualified.isChecked = person.disqualified
+    }
+
+    override fun onTagDiscovered(tag: Tag?) {
+        val ndef = MifareClassic.get(tag)
+        if (ndef != null) {
             try {
-                db.personDao().insert(person)
+                ndef.connect()
+
+                val start = System.currentTimeMillis()
+
+                val person = nfcHelper.readPerson(ndef)
+
+                Log.d("NFC DEBUG READ", "${System.currentTimeMillis() - start}ms")
+
+                if (viewModel.getPersonByID(person.runnerId) != null) {
+                    runOnUiThread {
+                        scanFail(null, "Tento člověk již byl přidán")
+                    }
+                    return
+                }
+
+                runOnUiThread {
+                    scanSuccess(person)
+                }
+            } catch (e: TagLostException) {
+                runOnUiThread {
+                    scanFail(e, "Čip byl odebrán příliš rychle")
+                }
             } catch (e: Exception) {
                 runOnUiThread {
-                    Log.d("DB", e.stackTraceToString())
-                    Toast.makeText(this@AddActivity, "Chyba při ukládání záznamu", Toast.LENGTH_LONG).show()
+                    scanFail(e, "Chyba při komunikaci s čipem")
+                }
+            } finally {
+                runOnUiThread {
+                    stopScanningNFC()
+                }
+                try {
+                    ndef.close()
+                } catch (e: IOException) {
+                    runOnUiThread { scanFail(e, "Chyba při komunikaci s čipem") }
                 }
             }
+        } else {
+            runOnUiThread { scanFail(null, "Nepodporovaný typ čipu") }
+        }
+    }
+
+    private fun scanSuccess(person: Person) {
+        scanDialogView.findViewById<LottieAnimationView>(R.id.animation_nfcScanning).visibility = View.GONE
+
+        val animation = scanDialogView.findViewById<LottieAnimationView>(R.id.animation_nfcSuccess)
+        animation.visibility = View.VISIBLE
+        animation.animate().setDuration(700).withEndAction {
+            peopleQueue.add(Pair(person, System.currentTimeMillis()))
+            Toast.makeText(this@AddActivity, "Běžec č. ${person.runnerId} přidán do fronty", Toast.LENGTH_SHORT).show()
+
+            scanDialog.dismiss()
+            animation.visibility = View.GONE
         }.start()
+    }
+
+    private fun scanFail(e: Exception?, mess: String) {
+        scanDialogView.findViewById<LottieAnimationView>(R.id.animation_nfcScanning).visibility = View.GONE
+
+        val animation = scanDialogView.findViewById<LottieAnimationView>(R.id.animation_nfcFail)
+        animation.visibility = View.VISIBLE
+        animation.animate().setDuration(2000).withEndAction {
+            animation.visibility = View.GONE
+            scanDialog.dismiss()
+        }.start()
+
+        Toast.makeText(this@AddActivity, mess, Toast.LENGTH_LONG).show()
+        e?.stackTraceToString()?.let { Log.d("NFC", it) }
+    }
+
+    private fun scanForNewPerson() {
+        if (nfcHelper.checkNfcAvailability(nfcAdapter) == NFCHelper.NfcAvailability.OFF) {
+            scanDialogView.findViewById<Button>(R.id.button_turnOnNfc)
+                .setOnClickListener {
+                    startActivity(Intent("android.settings.NFC_SETTINGS"))
+                    scanDialogView.findViewById<ConstraintLayout>(R.id.constraintLayout_nfcOff).visibility = View.GONE
+                    scanDialogView.findViewById<LottieAnimationView>(R.id.animation_nfcScanning).visibility = View.VISIBLE
+                    startScanningNFC()
+                }
+            scanDialogView.findViewById<LottieAnimationView>(R.id.animation_nfcScanning).visibility = View.GONE
+            scanDialogView.findViewById<ConstraintLayout>(R.id.constraintLayout_nfcOff).visibility = View.VISIBLE
+        } else {
+            scanDialogView.findViewById<LottieAnimationView>(R.id.animation_nfcScanning).visibility = View.VISIBLE
+            scanDialogView.findViewById<ConstraintLayout>(R.id.constraintLayout_nfcOff).visibility = View.GONE
+            startScanningNFC()
+        }
+
+        scanDialog.show()
+    }
+
+    private fun initScanDialog() {
+        scanDialog = MaterialAlertDialogBuilder(this@AddActivity)
+            .setView(scanDialogView)
+            .setCancelable(true)
+            .setOnDismissListener {
+                nfcAdapter!!.disableReaderMode(this@AddActivity)
+                scanDialogView.findViewById<ImageView>(R.id.animation_nfcScanning).visibility = View.VISIBLE
+            }
+            .create()
     }
 
     private fun startScanningNFC() {

@@ -9,7 +9,6 @@ import android.nfc.NfcAdapter.*
 import android.nfc.Tag
 import android.nfc.TagLostException
 import android.nfc.tech.MifareClassic
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
@@ -17,6 +16,7 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.view.menu.MenuBuilder
@@ -24,30 +24,28 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.MenuCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.get
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.room.Room
-import androidx.room.RoomDatabase
-import androidx.sqlite.db.SupportSQLiteDatabase
 import com.airbnb.lottie.LottieAnimationView
 import com.example.turisticky_zavod.NFCHelper.NfcAvailability
 import com.example.turisticky_zavod.databinding.ActivityMainBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
+import kotlinx.coroutines.GlobalScope
 import java.io.IOException
 
 
 class MainActivity : AppCompatActivity(), ReaderCallback {
 
-    private var _binding: ActivityMainBinding? = null
-    private val binding get() = _binding!!
+    private lateinit var binding: ActivityMainBinding
 
     private var peopleList = ArrayList<Person>()
     private lateinit var rvAdapter: RvAdapter
 
+    private val viewModel: PersonViewModel by viewModels()
+
     private var nfcAdapter: NfcAdapter? = null
     private var nfcHelper = NFCHelper()
-
-    private lateinit var db: TZDatabase
 
     private lateinit var newPersonDialogView: View
 
@@ -56,19 +54,7 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
 
     private var activityResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            Thread {
-                Thread.sleep(100)
-                val person = db.personDao().getLast()
-                runOnUiThread {
-                    peopleList.add(0, person)
-
-                    rvAdapter.notifyItemInserted(0)
-                    rvAdapter.notifyItemRangeChanged(0, peopleList.size)
-
-                    if (peopleList.size == 1)
-                        binding.textViewNoData.visibility = View.GONE
-                }
-            }.start()
+            Toast.makeText(this@MainActivity, "Activity ended with result OK", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -76,38 +62,60 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         super.onCreate(savedInstanceState)
 
-        _binding = ActivityMainBinding.inflate(layoutInflater)
+        binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         setSupportActionBar(binding.toolbar)
-        binding.toolbar.setNavigationOnClickListener { Toast.makeText(this@MainActivity, "lmao", Toast.LENGTH_SHORT).show() }
-        binding.recyclerView.layoutManager = LinearLayoutManager(this)
-        rvAdapter = RvAdapter(peopleList, object: RvAdapter.OptionsMenuLongClickListener {
-            override fun onOptionsMenuLongClicked(position: Int): Boolean {
-                handleRecyclerViewItemLongClicked(position)
-                return true
-            }
-        })
+        binding.toolbar.setNavigationOnClickListener {
+            // TODO: Navigation bar
+            Toast.makeText(this@MainActivity, "Not yet implemented", Toast.LENGTH_SHORT).show()
+        }
+        binding.recyclerView.layoutManager = LinearLayoutManager(this@MainActivity)
+        rvAdapter =
+            RvAdapter(peopleList, object : RvAdapter.OptionsMenuLongClickListener {
+                    override fun onOptionsMenuLongClicked(position: Int): Boolean {
+                        handleRecyclerViewItemLongClicked(position)
+                        return true
+                    }
+                })
         binding.recyclerView.adapter = rvAdapter
+
+        viewModel.people.observe(this@MainActivity) { people ->
+            val diff = people.size - peopleList.size
+            Toast.makeText(this@MainActivity, "${people.size}", Toast.LENGTH_SHORT).show()
+
+            if (diff > 0) {
+                if (peopleList.isEmpty()) {
+                    for (person in people)
+                        peopleList.add(0, person)
+
+                    rvAdapter.notifyItemRangeInserted(0, peopleList.size)
+                    binding.textViewNoData.visibility = View.GONE
+                } else if (diff == 1) {
+                    peopleList.add(0, people.last())
+
+                    rvAdapter.notifyItemInserted(0)
+                    rvAdapter.notifyItemRangeChanged(0, peopleList.size)
+
+                    if (peopleList.size == 1)
+                        binding.textViewNoData.visibility = View.GONE
+                } else {
+                    for (person in people.takeLast(diff))
+                        peopleList.add(0, person)
+
+                    rvAdapter.notifyItemRangeInserted(0, diff)
+                    rvAdapter.notifyItemRangeChanged(0, peopleList.size)
+
+                    if (peopleList.size > 1)
+                        binding.textViewNoData.visibility = View.GONE
+                }
+            }
+        }
 
         nfcAdapter = getDefaultAdapter(this@MainActivity)
         if (nfcAdapter == null) {
             Toast.makeText(this@MainActivity, "Váš telefon nemá NFC", Toast.LENGTH_LONG).show()
             finish()
         }
-
-        db = Room.databaseBuilder(this@MainActivity, TZDatabase::class.java, "tz.db")
-            .fallbackToDestructiveMigration()
-            .addCallback( object : RoomDatabase.Callback() {
-                override fun onCreate(db: SupportSQLiteDatabase) {
-                    super.onCreate(db)
-                    populateCheckpoints()
-                }
-                override fun onDestructiveMigration(db: SupportSQLiteDatabase) {
-                    super.onDestructiveMigration(db)
-                    populateCheckpoints()
-                }
-            })
-            .build()
 
         binding.fabAdd.setOnClickListener {
             handleAddingNewPerson()
@@ -116,8 +124,6 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
         newPersonDialogView = layoutInflater.inflate(R.layout.dialog_add, null)
         initNewPersonDialog()
         initCancelDialog()
-
-        loadPeople()
     }
 
     override fun onTagDiscovered(tag: Tag?) {
@@ -130,7 +136,7 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
 
                 val person = nfcHelper.readPerson(ndef)
 
-                Log.d("NFC DEBUG READ", "${System.currentTimeMillis() - start}ms")
+                Log.d("NFC DEBUG READ", "Tag read in ${System.currentTimeMillis() - start}ms")
 
                 for (p in peopleList) {
                     if (p.runnerId == person.runnerId) {
@@ -176,7 +182,8 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
             val intent = Intent(this@MainActivity, AddActivity::class.java)
                 .putExtra("person", person)
 
-            activityResultLauncher.launch(intent)
+//            activityResultLauncher.launch(intent)
+            startActivity(intent)
 
             newPersonDialog.dismiss()
             animation.visibility = View.GONE
@@ -237,6 +244,7 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
                 }
                 R.id.menuItem_listItemEdit -> {
                     Toast.makeText(this@MainActivity , "Position: $position\nSize: ${peopleList.size}" , Toast.LENGTH_SHORT).show()
+
                     true
                 }
                 else -> false
@@ -267,7 +275,8 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.menuItem_sendDataToPc -> {
-                Toast.makeText(this@MainActivity, "ne", Toast.LENGTH_SHORT).show()
+                // TODO: Communicate with desktop app
+                Toast.makeText(this@MainActivity, "Not yet implemented", Toast.LENGTH_SHORT).show()
 
                 true
             }
@@ -297,63 +306,40 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
         nfcAdapter!!.disableReaderMode(this@MainActivity)
     }
 
-    private fun loadPeople() {
-        if (peopleList.isEmpty()) {
-            Thread {
-                val people = db.personDao().getAll()
-                if (people.isNotEmpty()) {
-                    runOnUiThread {
-                        for (person in people) {
-                            peopleList.add(0, person)
-                        }
-                        rvAdapter.notifyItemRangeInserted(0, people.size)
-                        binding.textViewNoData.visibility = View.GONE
-                    }
-                }
-            }.start()
+    private fun deletePerson(position: Int) {
+        try {
+            viewModel.deletePerson(peopleList[position])
+
+            peopleList.remove(peopleList[position])
+
+            rvAdapter.notifyItemRemoved(position)
+            rvAdapter.notifyItemRangeChanged(position, peopleList.size - position)
+
+            if (peopleList.size == 0)
+                binding.textViewNoData.visibility = View.VISIBLE
+        } catch (e: Exception) {
+            runOnUiThread {
+                Log.d("DB", e.stackTraceToString())
+                Toast.makeText(this@MainActivity, "Chyba při mazání záznamu", Toast.LENGTH_LONG).show()
+            }
         }
     }
 
-    private fun deletePerson(position: Int) {
-        Thread {
-            try {
-                db.personDao().delete(peopleList[position])
-                runOnUiThread {
-                    peopleList.remove(peopleList[position])
-
-                    rvAdapter.notifyItemRemoved(position)
-                    rvAdapter.notifyItemRangeChanged(position, peopleList.size - position)
-
-                    if (peopleList.size == 0)
-                        binding.textViewNoData.visibility = View.VISIBLE
-                }
-            } catch (e: Exception) {
-                runOnUiThread {
-                    Log.d("DB", e.stackTraceToString())
-                    Toast.makeText(this@MainActivity, "Chyba při mazání záznamu", Toast.LENGTH_LONG).show()
-                }
-            }
-        }.start()
-    }
-
     private fun deleteAllPeople() {
-        Thread {
-            try {
-                db.personDao().deleteAll()
-                runOnUiThread {
-                    val size = peopleList.size
-                    peopleList.clear()
+        try {
+            viewModel.deleteAll()
 
-                    rvAdapter.notifyItemRangeRemoved(0, size)
-                    binding.textViewNoData.visibility = View.VISIBLE
-                }
-            } catch (e: Exception) {
-                runOnUiThread {
-                    Log.d("DB", e.stackTraceToString())
-                    Toast.makeText(this@MainActivity, "Chyba při mazání záznamů", Toast.LENGTH_LONG).show()
-                }
+            val size = peopleList.size
+            peopleList.clear()
+
+            rvAdapter.notifyItemRangeRemoved(0, size)
+            binding.textViewNoData.visibility = View.VISIBLE
+        } catch (e: Exception) {
+            runOnUiThread {
+                Log.d("DB", e.stackTraceToString())
+                Toast.makeText(this@MainActivity, "Chyba při mazání záznamů", Toast.LENGTH_LONG).show()
             }
-        }.start()
+        }
     }
 
     private fun initNewPersonDialog() {
@@ -380,26 +366,5 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
                 newPersonDialog.dismiss()
             }
             .create()
-    }
-
-    private fun populateCheckpoints() {
-        Thread {
-            db.checkpointDao().apply {
-                insert(Checkpoint("Stavba stanu", false, null))
-                insert(Checkpoint("Orientace mapy", false, null))
-                insert(Checkpoint("Lanová lávka", false, null))
-                insert(Checkpoint("Uzly", false, null))
-                insert(Checkpoint("Míček", false, null))
-                insert(Checkpoint("Plížení", false, null))
-                insert(Checkpoint("Turistické a topografické", false, null))
-                insert(Checkpoint("Určování dřevin", false, null))
-                insert(Checkpoint("Kulturně poznávací", false, null))
-            }
-        }.start()
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        _binding = null
     }
 }
