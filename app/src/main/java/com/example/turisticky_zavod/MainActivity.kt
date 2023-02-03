@@ -81,7 +81,6 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
 
         viewModel.people.observe(this@MainActivity) { people ->
             val diff = people.size - peopleList.size
-            Toast.makeText(this@MainActivity, "${people.size}", Toast.LENGTH_SHORT).show()
 
             if (diff > 0) {
                 if (peopleList.isEmpty()) {
@@ -138,17 +137,19 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
 
                 Log.d("NFC DEBUG READ", "Tag read in ${System.currentTimeMillis() - start}ms")
 
-                for (p in peopleList) {
-                    if (p.runnerId == person.runnerId) {
-                        runOnUiThread {
-                            scanFail(null, "Tento člověk již byl přidán")
-                        }
-                        return
+                if (peopleList.find { p -> p.runnerId == person.runnerId } != null) {
+                    runOnUiThread {
+                        scanFail(null, "Tento člověk již byl přidán")
                     }
+                    return
                 }
 
                 runOnUiThread {
                     scanSuccess(person)
+                }
+            } catch (e: NFCException) {
+                runOnUiThread {
+                    scanFail(e, e.message!!)
                 }
             } catch (e: TagLostException) {
                 runOnUiThread {
@@ -318,10 +319,8 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
             if (peopleList.size == 0)
                 binding.textViewNoData.visibility = View.VISIBLE
         } catch (e: Exception) {
-            runOnUiThread {
-                Log.d("DB", e.stackTraceToString())
-                Toast.makeText(this@MainActivity, "Chyba při mazání záznamu", Toast.LENGTH_LONG).show()
-            }
+            Log.d("DB", e.stackTraceToString())
+            Toast.makeText(this@MainActivity, "Chyba při mazání záznamu", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -335,10 +334,8 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
             rvAdapter.notifyItemRangeRemoved(0, size)
             binding.textViewNoData.visibility = View.VISIBLE
         } catch (e: Exception) {
-            runOnUiThread {
-                Log.d("DB", e.stackTraceToString())
-                Toast.makeText(this@MainActivity, "Chyba při mazání záznamů", Toast.LENGTH_LONG).show()
-            }
+            Log.d("DB", e.stackTraceToString())
+            Toast.makeText(this@MainActivity, "Chyba při mazání záznamů", Toast.LENGTH_LONG).show()
         }
     }
 

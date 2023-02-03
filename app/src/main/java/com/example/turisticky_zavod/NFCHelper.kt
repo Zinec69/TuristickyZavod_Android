@@ -35,7 +35,7 @@ class NFCHelper {
         }
 
         if (count >= 0)
-            throw Exception("Poškozený čip, ne všechna data se dala přečíst")
+            throw NFCException("Poškozený čip, ne všechna data se dala přečíst")
 
         val allStrArray = allStr.split(";")
 
@@ -95,7 +95,7 @@ class NFCHelper {
         }
 
         if (stage < allByteArrays.size)
-            throw Exception("Málo místa na čipu pro zapsání všech dat")
+            throw NFCException("Málo místa na čipu pro zapsání všech dat")
     }
 
     private fun stringToByteArraySplits(str: String): List<ByteArray> {
@@ -134,3 +134,6 @@ class NFCHelper {
         READY, OFF, NOT_SUPPORTED
     }
 }
+
+class NFCException(message: String) : Exception(message)
+

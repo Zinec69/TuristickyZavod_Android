@@ -16,9 +16,9 @@ data class Person(
     var penaltySeconds: Int = 0,
     var disqualified: Boolean = false,
     val startTime: Long,
-    val finishTime: Long?,
+    val finishTime: Long? = null,
     var timeWaited: Int,
-    @PrimaryKey(autoGenerate = true) val id: Int?
+    @PrimaryKey(autoGenerate = true) val id: Int? = null
 ) : Parcelable {
     constructor(parcel: Parcel) : this(
         parcel.readInt(),

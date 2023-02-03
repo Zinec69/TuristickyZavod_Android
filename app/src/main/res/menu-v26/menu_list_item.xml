@@ -12,5 +12,5 @@
         android:icon="@drawable/delete_fill_2_24"
         android:title="@string/menu_item_delete_item"
         app:showAsAction="ifRoom"
-        android:iconTint="?attr/colorError"/>
+        android:iconTint="#F45E56"/>
 </menu>

@@ -38,6 +38,7 @@ abstract class TZDatabase : RoomDatabase() {
 private fun populateCheckpoints(context: Context) {
     Thread {
         TZDatabase.getInstance(context).checkpointDao().apply {
+            insert(Checkpoint("Start/cíl", false, null))
             insert(Checkpoint("Stavba stanu", false, null))
             insert(Checkpoint("Orientace mapy", false, null))
             insert(Checkpoint("Lanová lávka", false, null))

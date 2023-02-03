@@ -22,12 +22,21 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.ViewCompat
 import androidx.core.view.children
+import androidx.lifecycle.lifecycleScope
 import com.airbnb.lottie.LottieAnimationView
 import com.example.turisticky_zavod.databinding.ActivityAddBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import java.io.IOException
 
 class AddActivity : AppCompatActivity(), ReaderCallback {
+
+
+    private val READING = 0
+    private val WRITING = 1
+
+    private var stage = 1
 
     private lateinit var binding: ActivityAddBinding
 
@@ -67,14 +76,9 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
 
         peopleQueue.add(Pair(person, null))
 
-//        binding.textViewPenaltyMinutes.alpha = 0f
-//        binding.textViewPenaltyMinutes.x -= 60f
-
         binding.buttonSave.setOnClickListener {
-            save()
-//            binding.textViewPenaltyMinutes.animate().alpha(1f).translationXBy(60f).setDuration(700).withEndAction {
-//                binding.textViewPenaltyMinutes.animate().alpha(0f).translationXBy(60f).setDuration(700).setStartDelay(3000).start()
-//            }.start()
+            stage = WRITING
+            scanForPerson()
         }
         binding.coordinatorLayoutAdd.setOnClickListener { view: View -> loseFocus(view) }
         binding.toolbarAdd.setOnClickListener { view: View -> loseFocus(view) }
@@ -121,13 +125,16 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
             transitionToolbar.reverseTransition(500)
         }
 
-        binding.buttonAddToQueue.setOnClickListener { scanForNewPerson() }
+        binding.buttonAddToQueue.setOnClickListener {
+            stage = READING
+            scanForPerson()
+        }
 
         scanDialogView = layoutInflater.inflate(R.layout.dialog_add, null)
         initScanDialog()
     }
 
-    private fun save() {
+    private fun getUpdatedPerson(): Person {
         val disqualified = binding.switchDisqualified.isChecked
 
         val penaltyMinutes = binding.numberPickerMinute.value
@@ -135,22 +142,13 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
         val penalty = penaltyMinutes * 60 + penaltySeconds * 5
 
         val person = peopleQueue[0].first
-        val holdup = peopleQueue[0].second
+        val timeJoinedQueue = peopleQueue[0].second
         person.disqualified = disqualified
         person.penaltySeconds += penalty
-        if (holdup != null)
-            person.timeWaited += (System.currentTimeMillis() - holdup).toInt()
+        if (timeJoinedQueue != null)
+            person.timeWaited += (System.currentTimeMillis() - timeJoinedQueue).toInt()
 
-        viewModel.addPerson(person)
-
-        peopleQueue.removeAt(0)
-
-        if (peopleQueue.isEmpty()) {
-            setResult(RESULT_OK)
-            finish()
-        } else {
-            handleNewPerson()
-        }
+        return person
     }
 
     private fun handleNewPerson() {
@@ -167,14 +165,16 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
             binding.editTextRunnerTeam.setText(person.team)
             binding.editTextRunnerTeam.animate().alpha(1f).setDuration(200).start()
         }.start()
-        binding.numberPickerMinute.animate().alpha(0f).setDuration(200).withEndAction {
-            binding.numberPickerMinute.value = 0
-            binding.numberPickerMinute.animate().alpha(1f).setDuration(200).start()
-        }.start()
-        binding.numberPickerSecond.animate().alpha(0f).setDuration(200).withEndAction {
-            binding.numberPickerSecond.value = 0
-            binding.numberPickerSecond.animate().alpha(1f).setDuration(200).start()
-        }.start()
+        if (binding.numberPickerMinute.value > 0 || binding.numberPickerSecond.value > 0) {
+            binding.numberPickerMinute.animate().alpha(0f).setDuration(200).withEndAction {
+                binding.numberPickerMinute.value = 0
+                binding.numberPickerMinute.animate().alpha(1f).setDuration(200).start()
+            }.start()
+            binding.numberPickerSecond.animate().alpha(0f).setDuration(200).withEndAction {
+                binding.numberPickerSecond.value = 0
+                binding.numberPickerSecond.animate().alpha(1f).setDuration(200).start()
+            }.start()
+        }
         binding.switchDisqualified.isChecked = person.disqualified
     }
 
@@ -184,21 +184,42 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
             try {
                 ndef.connect()
 
-                val start = System.currentTimeMillis()
+                var start = System.currentTimeMillis()
 
-                val person = nfcHelper.readPerson(ndef)
+                var person = nfcHelper.readPerson(ndef)
 
-                Log.d("NFC DEBUG READ", "${System.currentTimeMillis() - start}ms")
+                Log.d("NFC DEBUG READ", "Tag read in ${System.currentTimeMillis() - start}ms")
 
+                if (stage == WRITING && person.runnerId != peopleQueue[0].first.runnerId) {
+                    runOnUiThread {
+                        scanFail(null, "Čip se neshoduje s právě zpracovávaným běžcem")
+                    }
+                    return
+                }
                 if (viewModel.getPersonByID(person.runnerId) != null) {
                     runOnUiThread {
                         scanFail(null, "Tento člověk již byl přidán")
                     }
                     return
                 }
+                if (stage == WRITING) {
+                    start = System.currentTimeMillis()
+
+                    person = getUpdatedPerson()
+
+                    nfcHelper.writePersonOnTag(ndef, person)
+
+                    Log.d("NFC DEBUG WRITE", "Tag written to in ${System.currentTimeMillis() - start}ms")
+
+                    viewModel.addPerson(person)
+                }
 
                 runOnUiThread {
                     scanSuccess(person)
+                }
+            } catch (e: NFCException) {
+                runOnUiThread {
+                    scanFail(e, e.message!!)
                 }
             } catch (e: TagLostException) {
                 runOnUiThread {
@@ -229,8 +250,20 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
         val animation = scanDialogView.findViewById<LottieAnimationView>(R.id.animation_nfcSuccess)
         animation.visibility = View.VISIBLE
         animation.animate().setDuration(700).withEndAction {
-            peopleQueue.add(Pair(person, System.currentTimeMillis()))
-            Toast.makeText(this@AddActivity, "Běžec č. ${person.runnerId} přidán do fronty", Toast.LENGTH_SHORT).show()
+            if (stage == READING) {
+                peopleQueue.add(Pair(person, System.currentTimeMillis()))
+                Toast.makeText(this@AddActivity, "Běžec č. ${person.runnerId} přidán do fronty", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this@AddActivity, "Běžec č. ${person.runnerId} úspěšně uložen", Toast.LENGTH_SHORT).show()
+                peopleQueue.removeAt(0)
+
+                if (peopleQueue.isEmpty()) {
+                    setResult(RESULT_OK)
+                    finish()
+                } else {
+                    handleNewPerson()
+                }
+            }
 
             scanDialog.dismiss()
             animation.visibility = View.GONE
@@ -251,7 +284,7 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
         e?.stackTraceToString()?.let { Log.d("NFC", it) }
     }
 
-    private fun scanForNewPerson() {
+    private fun scanForPerson() {
         if (nfcHelper.checkNfcAvailability(nfcAdapter) == NFCHelper.NfcAvailability.OFF) {
             scanDialogView.findViewById<Button>(R.id.button_turnOnNfc)
                 .setOnClickListener {
@@ -276,7 +309,7 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
             .setView(scanDialogView)
             .setCancelable(true)
             .setOnDismissListener {
-                nfcAdapter!!.disableReaderMode(this@AddActivity)
+                stopScanningNFC()
                 scanDialogView.findViewById<ImageView>(R.id.animation_nfcScanning).visibility = View.VISIBLE
             }
             .create()
@@ -293,13 +326,22 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
     }
 
     private fun handleBackButtonPressed() {
-        val builder = MaterialAlertDialogBuilder(this)
-        builder.setTitle("Máte neuložené změny")
-        builder.setMessage("Opravdu chcete jít zpět? Provedené změny nebudou uloženy")
-        builder.setCancelable(false)
-        builder.setNegativeButton("Ne") { dialog: DialogInterface, _: Int -> dialog.cancel() }
-        builder.setPositiveButton("Ano") { _: DialogInterface?, _: Int -> finish() }
-        builder.create().show()
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Máte neuložené změny")
+            .setMessage("Opravdu chcete jít zpět? Provedené změny nebudou uloženy")
+            .setCancelable(false)
+            .setNegativeButton("Ne") { dialog: DialogInterface, _: Int -> dialog.cancel() }
+            .setPositiveButton("Ano") { _: DialogInterface?, _: Int ->
+                peopleQueue.removeAt(0)
+
+                if (peopleQueue.isEmpty()) {
+                    finish()
+                } else {
+                    handleNewPerson()
+                }
+            }
+            .create()
+            .show()
     }
 
     private fun loseFocus(view: View) {
