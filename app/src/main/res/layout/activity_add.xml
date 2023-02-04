@@ -21,52 +21,53 @@
             app:subtitleCentered="false"
             app:subtitle="Nový záznam"
             app:navigationIcon="@drawable/close_24"
-            app:navigationIconTint="@color/runnerInfo" />
+            app:navigationIconTint="@color/runnerInfo">
 
-    </com.google.android.material.appbar.AppBarLayout>
-
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/cardView_disqualified"
-        style="@style/Widget.Material3.CardView.Elevated"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="end"
-        android:layout_marginTop="7dp"
-        android:layout_marginEnd="20dp"
-        android:visibility="visible"
-        app:cardCornerRadius="20dp">
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:paddingHorizontal="10dp"
-            android:paddingVertical="2dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_gravity="end"
-                android:layout_marginStart="10dp"
-                android:layout_marginEnd="15dp"
-                android:gravity="center"
-                android:text="Diskvalifikován">
-
-            </TextView>
-
-            <com.google.android.material.materialswitch.MaterialSwitch
-                android:id="@+id/switch_disqualified"
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardView_disqualified"
+                style="@style/Widget.Material3.CardView.Elevated"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:scaleX="0.95"
-                android:scaleY="0.95"
-                android:contextClickable="true">
+                android:layout_gravity="end"
+                android:layout_marginTop="7dp"
+                android:layout_marginEnd="20dp"
+                android:visibility="visible"
+                app:cardCornerRadius="20dp">
 
-            </com.google.android.material.materialswitch.MaterialSwitch>
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="10dp"
+                    android:paddingVertical="2dp">
 
-        </LinearLayout>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_gravity="end"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginEnd="15dp"
+                        android:gravity="center"
+                        android:text="@string/text_view_disqualified">
 
-    </com.google.android.material.card.MaterialCardView>
+                    </TextView>
+
+                    <com.google.android.material.materialswitch.MaterialSwitch
+                        android:id="@+id/switch_disqualified"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:scaleX="0.95"
+                        android:scaleY="0.95"
+                        android:contextClickable="true">
+
+                    </com.google.android.material.materialswitch.MaterialSwitch>
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+        </com.google.android.material.appbar.MaterialToolbar>
+
+    </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.core.widget.NestedScrollView
         android:id="@+id/nestedScrollView_content"
@@ -103,10 +104,9 @@
                         android:layout_height="wrap_content"
                         android:gravity="center"
                         android:layout_marginBottom="8dp"
-                        android:text="Informace o běžci"
+                        android:text="@string/text_view_runner_info"
                         android:textSize="15sp"
-                        android:textColor="?attr/colorPrimaryDark">
-                    </TextView>
+                        android:textColor="?attr/colorPrimaryDark" />
 
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/textInputLayout_runnerId"
@@ -127,6 +127,7 @@
                             android:inputType="number"
                             android:textSize="15sp"
                             android:textColor="#7B6B8C"/>
+
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <com.google.android.material.textfield.TextInputLayout
@@ -203,8 +204,7 @@
                         android:gravity="center"
                         android:text="@string/text_view_penalty_minutes"
                         android:textColor="?attr/colorPrimaryDark"
-                        android:textSize="15sp">
-                    </TextView>
+                        android:textSize="15sp" />
 
                     <LinearLayout
                         android:id="@+id/linearLayout_penaltyMinutes"
@@ -219,8 +219,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginHorizontal="20dp"
-                            android:layout_weight="1">
-                        </NumberPicker>
+                            android:layout_weight="1" />
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -229,17 +228,14 @@
                             android:paddingBottom="5dp"
                             android:layout_marginHorizontal="10dp"
                             android:text="@string/text_view_penalty_minutes_colon"
-                            android:textSize="25sp">
-
-                        </TextView>
+                            android:textSize="25sp" />
 
                         <NumberPicker
                             android:id="@+id/numberPicker_second"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginHorizontal="20dp"
-                            android:layout_weight="1">
-                        </NumberPicker>
+                            android:layout_weight="1" />
 
                     </LinearLayout>
 
@@ -248,6 +244,7 @@
             </com.google.android.material.card.MaterialCardView>
 
         </LinearLayout>
+
     </androidx.core.widget.NestedScrollView>
 
     <LinearLayout
@@ -270,6 +267,7 @@
 
         <Button
             android:id="@+id/button_save"
+            style="?android:attr/button"
             android:layout_width="0dp"
             android:layout_height="65dp"
             android:layout_marginStart="5dp"
@@ -279,9 +277,9 @@
 
         <Button
             android:id="@+id/button_addToQueue"
+            style="?attr/materialIconButtonFilledStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            style="?attr/materialIconButtonFilledStyle"
             app:icon="@drawable/group_add_fill"
             android:paddingHorizontal="17dp"
             android:paddingVertical="13dp" />

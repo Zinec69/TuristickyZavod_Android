@@ -13,7 +13,8 @@ class NFCHelper {
         var i = 1
         var count = -1
         while (i < tag.blockCount) {
-            if ((i + 1) % 4 == 0) {
+            val blocksInSector = tag.getBlockCountInSector(tag.blockToSector(i))
+            if ((i + 1) % blocksInSector == 0) {
                 i++
                 continue
             }
@@ -27,11 +28,11 @@ class NFCHelper {
                 }
                 Log.d("NFC DEBUG READ", "Block $i: $block")
 
+                i++
                 if (--count < 0) break
             } else {
-                i += 4
+                i += blocksInSector
             }
-            i++
         }
 
         if (count >= 0)
@@ -74,7 +75,8 @@ class NFCHelper {
 
         var i = 1
         while (i < tag.blockCount && stage < allByteArrays.size) {
-            if ((i + 1) % 4 == 0) {
+            val blocksInSector = tag.getBlockCountInSector(tag.blockToSector(i))
+            if ((i + 1) % blocksInSector == 0) {
                 i++
                 continue
             }
@@ -87,11 +89,11 @@ class NFCHelper {
                     Log.d("NFC DEBUG WRITE", "Block $i: ${allByteArrays[stage].toString(Charset.forName("ISO-8859-2"))}")
                     tag.writeBlock(i, allByteArrays[stage])
                 }
+                i++
                 stage++
             } else {
-                i += 4
+                i += blocksInSector
             }
-            i++
         }
 
         if (stage < allByteArrays.size)

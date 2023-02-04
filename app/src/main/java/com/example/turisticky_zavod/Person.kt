@@ -105,16 +105,16 @@ class PersonRepository(private val personDao: PersonDao) {
         personDao.insert(person)
     }
 
+    suspend fun update(person: Person) {
+        personDao.update(person)
+    }
+
     suspend fun delete(person: Person) {
         personDao.delete(person)
     }
 
     suspend fun deleteAll() {
         personDao.deleteAll()
-    }
-
-    suspend fun update(person: Person) {
-        personDao.update(person)
     }
 }
 
@@ -129,25 +129,25 @@ class PersonViewModel(application: Application) : AndroidViewModel(application) 
         people = repository.people
     }
 
-    fun getPersonByID(id: Int) = repository.getByID(id)
+    fun getByID(id: Int) = repository.getByID(id)
 
     fun getLastPerson() = repository.getLast()
 
     fun getNLastPeople(n: Int) = repository.getNLast(n)
 
-    fun addPerson(person: Person) = viewModelScope.launch(Dispatchers.IO) {
+    fun insert(person: Person) = viewModelScope.launch(Dispatchers.IO) {
         repository.insert(person)
     }
 
-    fun deletePerson(person: Person) = viewModelScope.launch(Dispatchers.IO) {
+    fun updat(person: Person) = viewModelScope.launch(Dispatchers.IO) {
+        repository.update(person)
+    }
+
+    fun delete(person: Person) = viewModelScope.launch(Dispatchers.IO) {
         repository.delete(person)
     }
 
     fun deleteAll() = viewModelScope.launch(Dispatchers.IO) {
         repository.deleteAll()
-    }
-
-    fun updatePerson(person: Person) = viewModelScope.launch(Dispatchers.IO) {
-        repository.update(person)
     }
 }

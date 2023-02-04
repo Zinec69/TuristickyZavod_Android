@@ -62,5 +62,4 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$rootProject.lifecycle_version"
     implementation "androidx.lifecycle:lifecycle-livedata-ktx:$rootProject.lifecycle_version"
     implementation "androidx.lifecycle:lifecycle-common-java8:$rootProject.lifecycle_version"
-
 }

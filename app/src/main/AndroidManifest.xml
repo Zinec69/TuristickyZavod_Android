@@ -58,5 +58,13 @@
 
         </activity>
 
+        <activity
+            android:name=".CheckpointActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Turisticky_zavod"
+            android:windowSoftInputMode="adjustPan">
+
+        </activity>
+
     </application>
 </manifest>

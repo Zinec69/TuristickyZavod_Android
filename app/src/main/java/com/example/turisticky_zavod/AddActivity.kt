@@ -22,12 +22,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.ViewCompat
 import androidx.core.view.children
-import androidx.lifecycle.lifecycleScope
 import com.airbnb.lottie.LottieAnimationView
 import com.example.turisticky_zavod.databinding.ActivityAddBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import java.io.IOException
 
 class AddActivity : AppCompatActivity(), ReaderCallback {
@@ -48,7 +45,7 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
 
     private var peopleQueue = ArrayList<Pair<Person, Long?>>()
 
-    private val viewModel: PersonViewModel by viewModels()
+    private val personViewModel: PersonViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -196,7 +193,7 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
                     }
                     return
                 }
-                if (viewModel.getPersonByID(person.runnerId) != null) {
+                if (personViewModel.getByID(person.runnerId) != null) {
                     runOnUiThread {
                         scanFail(null, "Tento člověk již byl přidán")
                     }
@@ -211,7 +208,7 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
 
                     Log.d("NFC DEBUG WRITE", "Tag written to in ${System.currentTimeMillis() - start}ms")
 
-                    viewModel.addPerson(person)
+                    personViewModel.insert(person)
                 }
 
                 runOnUiThread {

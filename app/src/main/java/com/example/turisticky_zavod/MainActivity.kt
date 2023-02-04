@@ -24,14 +24,12 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.MenuCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.get
-import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.airbnb.lottie.LottieAnimationView
 import com.example.turisticky_zavod.NFCHelper.NfcAvailability
 import com.example.turisticky_zavod.databinding.ActivityMainBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
-import kotlinx.coroutines.GlobalScope
 import java.io.IOException
 
 
@@ -42,7 +40,7 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
     private var peopleList = ArrayList<Person>()
     private lateinit var rvAdapter: RvAdapter
 
-    private val viewModel: PersonViewModel by viewModels()
+    private val personViewModel: PersonViewModel by viewModels()
 
     private var nfcAdapter: NfcAdapter? = null
     private var nfcHelper = NFCHelper()
@@ -54,7 +52,10 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
 
     private var activityResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            Toast.makeText(this@MainActivity, "Activity ended with result OK", Toast.LENGTH_LONG).show()
+            val name = result.data?.getCharSequenceExtra("name")
+            val checkpoint = result.data?.getCharSequenceExtra("checkpoint")
+            name?.let { binding.textViewGuardNameVar.text = it }
+            binding.textViewCheckpointNameVar.text = checkpoint
         }
     }
 
@@ -62,10 +63,18 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         super.onCreate(savedInstanceState)
 
+        Thread {
+            if (TZDatabase.getInstance(this@MainActivity).checkpointDao().getActive() == null) {
+                runOnUiThread {
+                    activityResultLauncher.launch(Intent(this@MainActivity, CheckpointActivity::class.java))
+                }
+            }
+        }.start()
+
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        setSupportActionBar(binding.toolbar)
-        binding.toolbar.setNavigationOnClickListener {
+        setSupportActionBar(binding.toolbarMain)
+        binding.toolbarMain.setNavigationOnClickListener {
             // TODO: Navigation bar
             Toast.makeText(this@MainActivity, "Not yet implemented", Toast.LENGTH_SHORT).show()
         }
@@ -79,7 +88,7 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
                 })
         binding.recyclerView.adapter = rvAdapter
 
-        viewModel.people.observe(this@MainActivity) { people ->
+        personViewModel.people.observe(this@MainActivity) { people ->
             val diff = people.size - peopleList.size
 
             if (diff > 0) {
@@ -112,7 +121,7 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
 
         nfcAdapter = getDefaultAdapter(this@MainActivity)
         if (nfcAdapter == null) {
-            Toast.makeText(this@MainActivity, "Váš telefon nemá NFC", Toast.LENGTH_LONG).show()
+            Toast.makeText(this@MainActivity, "Tato aplikace funguje pouze na telefonech s NFC", Toast.LENGTH_LONG).show()
             finish()
         }
 
@@ -282,14 +291,18 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
                 true
             }
             R.id.menuItem_deleteAllData -> {
-                MaterialAlertDialogBuilder(this)
-                    .setTitle("Vymazat všechna data")
-                    .setMessage("Opravdu chcete vymazat všechna data? Změny nelze vrátit")
-                    .setCancelable(false)
-                    .setNegativeButton("Ne") { dialog: DialogInterface, _: Int -> dialog.cancel() }
-                    .setPositiveButton("Ano") { _: DialogInterface?, _: Int -> deleteAllPeople() }
-                    .create()
-                    .show()
+                if (peopleList.isNotEmpty()) {
+                    MaterialAlertDialogBuilder(this)
+                        .setTitle("Vymazat všechna data")
+                        .setMessage("Opravdu chcete vymazat všechna data? Změny nelze vrátit")
+                        .setCancelable(false)
+                        .setNegativeButton("Ne") { dialog: DialogInterface, _: Int -> dialog.cancel() }
+                        .setPositiveButton("Ano") { _: DialogInterface?, _: Int -> deleteAllPeople() }
+                        .create()
+                        .show()
+                } else {
+                    Toast.makeText(this@MainActivity, "Žádná data ke smazání", Toast.LENGTH_SHORT).show()
+                }
 
                 true
             }
@@ -309,7 +322,7 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
 
     private fun deletePerson(position: Int) {
         try {
-            viewModel.deletePerson(peopleList[position])
+            personViewModel.delete(peopleList[position])
 
             peopleList.remove(peopleList[position])
 
@@ -326,7 +339,7 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
 
     private fun deleteAllPeople() {
         try {
-            viewModel.deleteAll()
+            personViewModel.deleteAll()
 
             val size = peopleList.size
             peopleList.clear()

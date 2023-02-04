@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.room.*
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [Person::class, Checkpoint::class], version = 15)
+@Database(entities = [Person::class, Checkpoint::class], version = 16)
 abstract class TZDatabase : RoomDatabase() {
     abstract fun personDao(): PersonDao
     abstract fun checkpointDao(): CheckpointDao
@@ -39,15 +39,17 @@ private fun populateCheckpoints(context: Context) {
     Thread {
         TZDatabase.getInstance(context).checkpointDao().apply {
             insert(Checkpoint("Start/cíl", false, null))
+            insert(Checkpoint("Odhad vzdálenosti", false, null))
             insert(Checkpoint("Stavba stanu", false, null))
             insert(Checkpoint("Orientace mapy", false, null))
+            insert(Checkpoint("Azimutové úseky", false, null))
             insert(Checkpoint("Lanová lávka", false, null))
-            insert(Checkpoint("Uzly", false, null))
-            insert(Checkpoint("Míček", false, null))
+            insert(Checkpoint("Uzlování", false, null))
             insert(Checkpoint("Plížení", false, null))
-            insert(Checkpoint("Turistické a topografické", false, null))
-            insert(Checkpoint("Určování dřevin", false, null))
-            insert(Checkpoint("Kulturně poznávací", false, null))
+            insert(Checkpoint("Hod kriketovým míčkem", false, null))
+            insert(Checkpoint("Turistické a topografické značky", false, null))
+            insert(Checkpoint("Poznávání dřevin", false, null))
+            insert(Checkpoint("Kulturně poznávací činnost", false, null))
         }
     }.start()
 }
