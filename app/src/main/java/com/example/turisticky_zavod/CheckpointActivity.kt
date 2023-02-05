@@ -54,8 +54,7 @@ class CheckpointActivity: AppCompatActivity() {
     private fun loseFocus(view: View) {
         for (child in binding.constraintLayoutCheckpoint.children)
             child.clearFocus()
-        val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
-        imm.hideSoftInputFromWindow(view.windowToken, 0)
+        hideKeyboard(view)
     }
 
     private fun hideKeyboard(view: View) {
@@ -65,15 +64,21 @@ class CheckpointActivity: AppCompatActivity() {
 
     private fun save() {
         if (binding.autoCompleteTextViewMenuCheckpoints.text.isEmpty()) {
-            Toast.makeText(this@CheckpointActivity, "Musíte zvolit stanoviště", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this@CheckpointActivity, "Stanoviště je povinná položka", Toast.LENGTH_SHORT).show()
         } else {
             val intent = Intent()
-            intent.putExtra("name", binding.editTextGuardName.text)
+            intent.putExtra("name", binding.editTextRefereeName.text)
             intent.putExtra("checkpoint", binding.autoCompleteTextViewMenuCheckpoints.text)
             setResult(RESULT_OK, intent)
 
             Thread {
                 TZDatabase.getInstance(this@CheckpointActivity).checkpointDao().setActive(binding.autoCompleteTextViewMenuCheckpoints.text.toString())
+                val currentReferee = TZDatabase.getInstance(this@CheckpointActivity).refereeDao().get()
+                if (currentReferee == null) {
+                    TZDatabase.getInstance(this@CheckpointActivity).refereeDao().insert(Referee(binding.editTextRefereeName.text.toString()))
+                } else {
+                    TZDatabase.getInstance(this@CheckpointActivity).refereeDao().update(Referee(binding.editTextRefereeName.text.toString()))
+                }
             }.start()
 
             finish()

@@ -14,5 +14,9 @@
             android:id="@+id/menuItem_deleteAllData"
             android:icon="@drawable/delete_fill_2"
             android:title="@string/menu_item_delete_all_data" />
+        <item
+            android:id="@+id/menuItem_reset"
+            android:icon="@drawable/reset"
+            android:title="@string/menu_item_reset" />
     </group>
 </menu>

@@ -7,7 +7,8 @@ import java.nio.charset.Charset
 
 class NFCHelper {
 
-    fun readPerson(tag: MifareClassic): Person {
+    fun readRunner(tag: MifareClassic): Runner {
+        val start = System.currentTimeMillis()
         var allStr = ""
 
         var i = 1
@@ -31,7 +32,7 @@ class NFCHelper {
                 i++
                 if (--count < 0) break
             } else {
-                i += blocksInSector
+                i += if (i == 1) 3 else blocksInSector
             }
         }
 
@@ -42,17 +43,17 @@ class NFCHelper {
 
         Log.d("NFC DEBUG READ", "Whole string: $allStr")
         Log.d("NFC DEBUG READ", "String array: $allStrArray")
+        Log.d("NFC DEBUG READ", "Tag read in: ${System.currentTimeMillis() - start}ms")
 
-        return Person(
+        return Runner(
             allStrArray[0].toInt(),
             allStrArray[1],
             allStrArray[2],
-            allStrArray[3].toInt(),
-            allStrArray[4] == "1",
-            allStrArray[5].toLong(),
-            if (allStrArray[6] == "0") null else allStrArray[6].toLong(),
-            allStrArray[7].toInt(),
-            null
+            allStrArray[3].toLong(),
+            if (allStrArray[4] == "0") null else allStrArray[4].toLong(),
+            allStrArray[5].toInt(),
+            allStrArray[6].toInt(),
+            allStrArray[7] == "1"
         )
     }
 
@@ -64,12 +65,13 @@ class NFCHelper {
             .toString(Charset.forName("ISO-8859-2"))
     }
 
-    fun writePersonOnTag(tag: MifareClassic, person: Person) {
-        val allStr = "${person.runnerId};${person.name};${person.team};${person.penaltySeconds};" +
-                "${if (person.disqualified) 1 else 0};${person.startTime};${person.finishTime ?: 0};${person.timeWaited}"
+    fun writeRunnerOnTag(tag: MifareClassic, runner: Runner) {
+        val start = System.currentTimeMillis()
+        val allStr = "${runner.runnerId};${runner.name};${runner.team};${runner.startTime};${runner.finishTime ?: 0};" +
+                "${runner.timeWaited};${runner.penaltySeconds};${if (runner.disqualified) 1 else 0}"
         val allByteArrays = stringToByteArraySplits(allStr)
-        val arraySizeStr = allByteArrays.size.toString().toByteArray(Charset.forName("ISO-8859-2"))
-        val arraySizeBytes = ByteArray(16) { i -> if (i < arraySizeStr.size) arraySizeStr[i] else 0 }
+        val arraySizeBytes = allByteArrays.size.toString().toByteArray(Charset.forName("ISO-8859-2"))
+        val arraySizeBytesFit = ByteArray(16) { i -> if (i < arraySizeBytes.size) arraySizeBytes[i] else 0 }
 
         var stage = -1
 
@@ -83,8 +85,8 @@ class NFCHelper {
 
             if (tag.authenticateSectorWithKeyA(tag.blockToSector(i), MifareClassic.KEY_DEFAULT)) {
                 if (stage < 0) {
-                    Log.d("NFC DEBUG WRITE", "Block $i: ${arraySizeBytes.toString(Charset.forName("ISO-8859-2"))}")
-                    tag.writeBlock(i, arraySizeBytes)
+                    Log.d("NFC DEBUG WRITE", "Block $i: ${arraySizeBytesFit.toString(Charset.forName("ISO-8859-2"))}")
+                    tag.writeBlock(i, arraySizeBytesFit)
                 } else {
                     Log.d("NFC DEBUG WRITE", "Block $i: ${allByteArrays[stage].toString(Charset.forName("ISO-8859-2"))}")
                     tag.writeBlock(i, allByteArrays[stage])
@@ -92,12 +94,14 @@ class NFCHelper {
                 i++
                 stage++
             } else {
-                i += blocksInSector
+                i += if (i == 1) 3 else blocksInSector
             }
         }
 
         if (stage < allByteArrays.size)
             throw NFCException("Málo místa na čipu pro zapsání všech dat")
+
+        Log.d("NFC DEBUG WRITE", "Tag written to in: ${System.currentTimeMillis() - start}ms")
     }
 
     private fun stringToByteArraySplits(str: String): List<ByteArray> {

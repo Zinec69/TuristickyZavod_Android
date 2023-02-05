@@ -26,9 +26,12 @@ import com.airbnb.lottie.LottieAnimationView
 import com.example.turisticky_zavod.databinding.ActivityAddBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import java.io.IOException
+import java.text.DateFormat
+import java.text.SimpleDateFormat
+import java.util.*
+import kotlin.collections.ArrayList
 
 class AddActivity : AppCompatActivity(), ReaderCallback {
-
 
     private val READING = 0
     private val WRITING = 1
@@ -43,9 +46,9 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
     private lateinit var scanDialogView: View
     private lateinit var scanDialog: AlertDialog
 
-    private var peopleQueue = ArrayList<Pair<Person, Long?>>()
+    private var runnersQueue = ArrayList<Pair<Runner, Long?>>()
 
-    private val personViewModel: PersonViewModel by viewModels()
+    private val runnerViewModel: RunnerViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,22 +63,22 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
         binding.toolbarAdd.setNavigationOnClickListener { handleBackButtonPressed() }
         binding.buttonCancel.setOnClickListener { handleBackButtonPressed() }
 
-        val person =
+        val runner =
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU)
-                intent.getParcelableExtra("person")!!
+                intent.getParcelableExtra("runner")!!
             else
-                intent.getParcelableExtra("person", Person::class.java)!!
+                intent.getParcelableExtra("runner", Runner::class.java)!!
 
-        binding.editTextRunnerId.setText(person.runnerId.toString())
-        binding.editTextRunnerName.setText(person.name)
-        binding.editTextRunnerTeam.setText(person.team)
-        binding.switchDisqualified.isChecked = person.disqualified
+        binding.editTextRunnerId.setText(runner.runnerId.toString())
+        binding.editTextRunnerName.setText(runner.name)
+        binding.editTextRunnerTeam.setText(runner.team)
+        binding.switchDisqualified.isChecked = runner.disqualified
 
-        peopleQueue.add(Pair(person, null))
+        runnersQueue.add(Pair(runner, null))
 
         binding.buttonSave.setOnClickListener {
             stage = WRITING
-            scanForPerson()
+            scanForRunner()
         }
         binding.coordinatorLayoutAdd.setOnClickListener { view: View -> loseFocus(view) }
         binding.toolbarAdd.setOnClickListener { view: View -> loseFocus(view) }
@@ -107,7 +110,7 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
 
         val colorsLayout = arrayOf(ColorDrawable(getColor(R.color.background_layout_normal)), ColorDrawable(getColor(R.color.background_layout_disqualified)))
         val colorsToolbar = arrayOf(ColorDrawable(getColor(R.color.background_layout_normal)), ColorDrawable(getColor(R.color.background_layout_disqualified)))
-        if (person.disqualified) {
+        if (runner.disqualified) {
             binding.root.background = ColorDrawable(getColor(R.color.background_layout_disqualified))
             binding.toolbarAdd.background = ColorDrawable(getColor(R.color.background_layout_disqualified))
             colorsLayout.reverse()
@@ -124,42 +127,42 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
 
         binding.buttonAddToQueue.setOnClickListener {
             stage = READING
-            scanForPerson()
+            scanForRunner()
         }
 
         scanDialogView = layoutInflater.inflate(R.layout.dialog_add, null)
         initScanDialog()
     }
 
-    private fun getUpdatedPerson(): Person {
+    private fun getUpdatedRunner(): Runner {
         val disqualified = binding.switchDisqualified.isChecked
 
         val penaltyMinutes = binding.numberPickerMinute.value
         val penaltySeconds = binding.numberPickerSecond.value
         val penalty = penaltyMinutes * 60 + penaltySeconds * 5
 
-        val person = peopleQueue[0].first
-        val timeJoinedQueue = peopleQueue[0].second
-        person.disqualified = disqualified
-        person.penaltySeconds += penalty
-        if (timeJoinedQueue != null)
-            person.timeWaited += (System.currentTimeMillis() - timeJoinedQueue).toInt()
+        val runner = runnersQueue[0].first
+        runner.disqualified = disqualified
+        runner.penaltySeconds += penalty
+        runnersQueue[0].second?.let { runner.timeWaited += it.toInt() }
 
-        return person
+        return runner
     }
 
-    private fun handleNewPerson() {
-        val person = peopleQueue[0].first
+    private fun handleNewRunner() {
+        val runner = runnersQueue[0].first
+        runnersQueue[0] = Pair(runner, System.currentTimeMillis() - runnersQueue[0].second!!)
+
         binding.editTextRunnerId.animate().alpha(0f).setDuration(200).withEndAction {
-            binding.editTextRunnerId.setText(person.runnerId.toString())
+            binding.editTextRunnerId.setText(runner.runnerId.toString())
             binding.editTextRunnerId.animate().alpha(1f).setDuration(200).start()
         }.start()
         binding.editTextRunnerName.animate().alpha(0f).setDuration(200).withEndAction {
-            binding.editTextRunnerName.setText(person.name)
+            binding.editTextRunnerName.setText(runner.name)
             binding.editTextRunnerName.animate().alpha(1f).setDuration(200).start()
         }.start()
         binding.editTextRunnerTeam.animate().alpha(0f).setDuration(200).withEndAction {
-            binding.editTextRunnerTeam.setText(person.team)
+            binding.editTextRunnerTeam.setText(runner.team)
             binding.editTextRunnerTeam.animate().alpha(1f).setDuration(200).start()
         }.start()
         if (binding.numberPickerMinute.value > 0 || binding.numberPickerSecond.value > 0) {
@@ -172,7 +175,10 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
                 binding.numberPickerSecond.animate().alpha(1f).setDuration(200).start()
             }.start()
         }
-        binding.switchDisqualified.isChecked = person.disqualified
+        binding.switchDisqualified.isChecked = runner.disqualified
+        binding.linearLayoutRunnerDelay.visibility = View.VISIBLE
+        val delayMs = runnersQueue[0].second!!
+        binding.textViewRunnerDelayVar.text = SimpleDateFormat("mm:ss", Locale("cze")).format(delayMs)
     }
 
     override fun onTagDiscovered(tag: Tag?) {
@@ -181,38 +187,30 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
             try {
                 ndef.connect()
 
-                var start = System.currentTimeMillis()
+                var runner = nfcHelper.readRunner(ndef)
 
-                var person = nfcHelper.readPerson(ndef)
-
-                Log.d("NFC DEBUG READ", "Tag read in ${System.currentTimeMillis() - start}ms")
-
-                if (stage == WRITING && person.runnerId != peopleQueue[0].first.runnerId) {
+                if (stage == WRITING && runner.runnerId != runnersQueue[0].first.runnerId) {
                     runOnUiThread {
                         scanFail(null, "Čip se neshoduje s právě zpracovávaným běžcem")
                     }
                     return
                 }
-                if (personViewModel.getByID(person.runnerId) != null) {
+                if (runnerViewModel.getByID(runner.runnerId) != null) {
                     runOnUiThread {
                         scanFail(null, "Tento člověk již byl přidán")
                     }
                     return
                 }
                 if (stage == WRITING) {
-                    start = System.currentTimeMillis()
+                    runner = getUpdatedRunner()
 
-                    person = getUpdatedPerson()
+                    nfcHelper.writeRunnerOnTag(ndef, runner)
 
-                    nfcHelper.writePersonOnTag(ndef, person)
-
-                    Log.d("NFC DEBUG WRITE", "Tag written to in ${System.currentTimeMillis() - start}ms")
-
-                    personViewModel.insert(person)
+                    runnerViewModel.insert(runner)
                 }
 
                 runOnUiThread {
-                    scanSuccess(person)
+                    scanSuccess(runner)
                 }
             } catch (e: NFCException) {
                 runOnUiThread {
@@ -241,24 +239,24 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
         }
     }
 
-    private fun scanSuccess(person: Person) {
+    private fun scanSuccess(runner: Runner) {
         scanDialogView.findViewById<LottieAnimationView>(R.id.animation_nfcScanning).visibility = View.GONE
 
         val animation = scanDialogView.findViewById<LottieAnimationView>(R.id.animation_nfcSuccess)
         animation.visibility = View.VISIBLE
         animation.animate().setDuration(700).withEndAction {
             if (stage == READING) {
-                peopleQueue.add(Pair(person, System.currentTimeMillis()))
-                Toast.makeText(this@AddActivity, "Běžec č. ${person.runnerId} přidán do fronty", Toast.LENGTH_SHORT).show()
+                runnersQueue.add(Pair(runner, System.currentTimeMillis()))
+                Toast.makeText(this@AddActivity, "Běžec č. ${runner.runnerId} přidán do fronty", Toast.LENGTH_SHORT).show()
             } else {
-                Toast.makeText(this@AddActivity, "Běžec č. ${person.runnerId} úspěšně uložen", Toast.LENGTH_SHORT).show()
-                peopleQueue.removeAt(0)
+                Toast.makeText(this@AddActivity, "Běžec č. ${runner.runnerId} úspěšně uložen", Toast.LENGTH_SHORT).show()
+                runnersQueue.removeAt(0)
 
-                if (peopleQueue.isEmpty()) {
+                if (runnersQueue.isEmpty()) {
                     setResult(RESULT_OK)
                     finish()
                 } else {
-                    handleNewPerson()
+                    handleNewRunner()
                 }
             }
 
@@ -281,7 +279,7 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
         e?.stackTraceToString()?.let { Log.d("NFC", it) }
     }
 
-    private fun scanForPerson() {
+    private fun scanForRunner() {
         if (nfcHelper.checkNfcAvailability(nfcAdapter) == NFCHelper.NfcAvailability.OFF) {
             scanDialogView.findViewById<Button>(R.id.button_turnOnNfc)
                 .setOnClickListener {
@@ -329,12 +327,12 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
             .setCancelable(false)
             .setNegativeButton("Ne") { dialog: DialogInterface, _: Int -> dialog.cancel() }
             .setPositiveButton("Ano") { _: DialogInterface?, _: Int ->
-                peopleQueue.removeAt(0)
+                runnersQueue.removeAt(0)
 
-                if (peopleQueue.isEmpty()) {
+                if (runnersQueue.isEmpty()) {
                     finish()
                 } else {
-                    handleNewPerson()
+                    handleNewRunner()
                 }
             }
             .create()

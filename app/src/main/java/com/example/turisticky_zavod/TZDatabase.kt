@@ -4,10 +4,11 @@ import android.content.Context
 import androidx.room.*
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [Person::class, Checkpoint::class], version = 16)
+@Database(entities = [Runner::class, Checkpoint::class, Referee::class], version = 19)
 abstract class TZDatabase : RoomDatabase() {
-    abstract fun personDao(): PersonDao
+    abstract fun runnerDao(): RunnerDao
     abstract fun checkpointDao(): CheckpointDao
+    abstract fun refereeDao(): RefereeDao
 
     companion object {
         @Volatile private var INSTANCE: TZDatabase? = null

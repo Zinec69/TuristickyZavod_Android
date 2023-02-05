@@ -43,24 +43,22 @@
 
                     <TextView
                         android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
-                        android:layout_gravity="end"
-                        android:layout_marginStart="10dp"
-                        android:layout_marginEnd="15dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="5dp"
+                        android:layout_marginEnd="10dp"
                         android:gravity="center"
-                        android:text="@string/text_view_disqualified">
-
-                    </TextView>
+                        android:text="@string/text_view_disqualified" />
 
                     <com.google.android.material.materialswitch.MaterialSwitch
                         android:id="@+id/switch_disqualified"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:scaleX="0.95"
-                        android:scaleY="0.95"
+                        android:scaleY="0.9"
                         android:contextClickable="true">
 
                     </com.google.android.material.materialswitch.MaterialSwitch>
+
                 </LinearLayout>
 
             </com.google.android.material.card.MaterialCardView>
@@ -82,6 +80,29 @@
             android:orientation="vertical"
             android:paddingHorizontal="20dp"
             android:paddingBottom="85dp">
+
+            <LinearLayout
+                android:id="@+id/linearLayout_runnerDelay"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginBottom="5dp"
+                android:orientation="horizontal"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/textView_runnerDelay"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/text_view_runner_delay" />
+
+                <TextView
+                    android:id="@+id/textView_runnerDelay_var"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="20dp" />
+
+            </LinearLayout>
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardView_runnerInfo"

@@ -7,7 +7,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.turisticky_zavod.databinding.ListRunnersBinding
 
 class RvAdapter(
-    private var peopleList: List<Person>,
+    private var runnersList: List<Runner>,
     private var optionsMenuLongClickListener: OptionsMenuLongClickListener
 ) : RecyclerView.Adapter<RvAdapter.ViewHolder>() {
 
@@ -24,7 +24,7 @@ class RvAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         with (holder) {
-            with (peopleList[position]) {
+            with (runnersList[position]) {
                 binding.textViewRunnerId.text = this.runnerId.toString()
                 binding.textViewRunnerName.text = this.name
                 binding.textViewRunnerTeam.text = this.team
@@ -39,6 +39,6 @@ class RvAdapter(
     }
 
     override fun getItemCount(): Int {
-        return peopleList.size
+        return runnersList.size
     }
 }
