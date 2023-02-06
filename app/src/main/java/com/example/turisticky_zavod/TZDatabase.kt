@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.room.*
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [Runner::class, Checkpoint::class, Referee::class], version = 19)
+@Database(entities = [Runner::class, Checkpoint::class, Referee::class], version = 20)
 abstract class TZDatabase : RoomDatabase() {
     abstract fun runnerDao(): RunnerDao
     abstract fun checkpointDao(): CheckpointDao
@@ -39,18 +39,18 @@ abstract class TZDatabase : RoomDatabase() {
 private fun populateCheckpoints(context: Context) {
     Thread {
         TZDatabase.getInstance(context).checkpointDao().apply {
-            insert(Checkpoint("Start/cíl", false, null))
-            insert(Checkpoint("Odhad vzdálenosti", false, null))
-            insert(Checkpoint("Stavba stanu", false, null))
-            insert(Checkpoint("Orientace mapy", false, null))
-            insert(Checkpoint("Azimutové úseky", false, null))
-            insert(Checkpoint("Lanová lávka", false, null))
-            insert(Checkpoint("Uzlování", false, null))
-            insert(Checkpoint("Plížení", false, null))
-            insert(Checkpoint("Hod kriketovým míčkem", false, null))
-            insert(Checkpoint("Turistické a topografické značky", false, null))
-            insert(Checkpoint("Poznávání dřevin", false, null))
-            insert(Checkpoint("Kulturně poznávací činnost", false, null))
+            insert(Checkpoint("Start/cíl"))
+            insert(Checkpoint("Odhad vzdálenosti"))
+            insert(Checkpoint("Stavba stanu"))
+            insert(Checkpoint("Orientace mapy"))
+            insert(Checkpoint("Azimutové úseky"))
+            insert(Checkpoint("Lanová lávka"))
+            insert(Checkpoint("Uzlování"))
+            insert(Checkpoint("Plížení"))
+            insert(Checkpoint("Hod kriketovým míčkem"))
+            insert(Checkpoint("Turistické a topografické značky"))
+            insert(Checkpoint("Poznávání dřevin"))
+            insert(Checkpoint("Kulturně poznávací činnost"))
         }
     }.start()
 }

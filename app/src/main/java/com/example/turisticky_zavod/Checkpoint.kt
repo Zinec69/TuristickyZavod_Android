@@ -11,8 +11,8 @@ import kotlinx.coroutines.launch
 @Entity
 data class Checkpoint(
     val name: String,
-    @ColumnInfo(defaultValue = "0") val active: Boolean? = false,
-    @PrimaryKey(autoGenerate = true) val id: Int?
+    @ColumnInfo(defaultValue = "0") val active: Boolean = false,
+    @PrimaryKey(autoGenerate = true) val id: Int? = null
 )
 
 @Dao

@@ -2,8 +2,7 @@
 <resources>
     <color name="runnerId">#8A61EA</color>
     <color name="runnerInfo">#E6E6E6</color>
-    <color name="divider_vertical">#27535353</color>
-    <color name="divider_horizontal">#4D888888</color>
+    <color name="divider">#27535353</color>
     <color name="card_view_stroke">#3F394E</color>
     <color name="nfc_animation_success">#1EDD4D</color>
     <color name="list_item_ripple">#524577</color>

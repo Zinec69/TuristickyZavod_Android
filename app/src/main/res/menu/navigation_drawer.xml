@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/menuItem_viewHeader"
+        android:title="ZOBRAZENÍ">
+        <menu>
+            <item
+                android:id="@+id/menuItem_viewBasic"
+                android:icon="@drawable/table_rows_narrow_fill"
+                android:title="Základní"
+                android:checkable="true"
+                app:showAsAction="ifRoom"/>
+            <item
+                android:id="@+id/menuItem_viewDetailed"
+                android:icon="@drawable/view_agenda_fill"
+                android:title="Detailní"
+                android:checkable="true"
+                app:showAsAction="ifRoom"/>
+        </menu>
+    </item>
+    <item
+        android:id="@+id/menuItem_actionHeader"
+        android:title="AKCE">
+        <menu>
+            <item
+                android:id="@+id/menuItem_actionDeleteRunners"
+                android:icon="@drawable/delete_fill_2"
+                android:title="Smazat seznam běžců"
+                android:checkable="false"
+                app:showAsAction="ifRoom"/>
+            <item
+                android:id="@+id/menuItem_actionReset"
+                android:icon="@drawable/reset"
+                android:title="Resetovat"
+                android:checkable="false"
+                app:showAsAction="ifRoom"/>
+        </menu>
+    </item>
+
+</menu>

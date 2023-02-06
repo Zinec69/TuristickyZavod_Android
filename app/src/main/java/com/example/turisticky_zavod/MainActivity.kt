@@ -29,16 +29,24 @@ import com.airbnb.lottie.LottieAnimationView
 import com.example.turisticky_zavod.NFCHelper.NfcAvailability
 import com.example.turisticky_zavod.databinding.ActivityMainBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.internal.NavigationMenu
+import com.google.android.material.internal.NavigationMenuView
 import com.google.android.material.textfield.TextInputEditText
 import java.io.IOException
 
 
 class MainActivity : AppCompatActivity(), ReaderCallback {
 
+    private val BASIC = 0
+    private val DETAILED = 1
+
+    private var listMode = 0
+
     private lateinit var binding: ActivityMainBinding
 
     private var runnersList = ArrayList<Runner>()
-    private lateinit var rvAdapter: RvAdapter
+    private lateinit var rvAdapterBasic: RvAdapterBasic
+    private lateinit var rvAdapterDetailed: RvAdapterDetailed
 
     private val runnerViewModel: RunnerViewModel by viewModels()
 
@@ -87,19 +95,65 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
             }
         }.start()
 
-        binding.toolbarMain.setNavigationOnClickListener {
-            // TODO: Navigation panel
-            Toast.makeText(this@MainActivity, "Not yet implemented", Toast.LENGTH_SHORT).show()
+        binding.toolbarMain.setNavigationOnClickListener { binding.drawerLayout.open() }
+        binding.navigationView.setCheckedItem(R.id.menuItem_viewBasic)
+        binding.navigationView.setNavigationItemSelectedListener { item ->
+            item.isChecked = true
+            binding.drawerLayout.close()
+
+            when (item.itemId) {
+                R.id.menuItem_viewBasic -> {
+                    listMode = BASIC
+                    binding.recyclerView.adapter = rvAdapterBasic
+                }
+                R.id.menuItem_viewDetailed -> {
+                    listMode = DETAILED
+                    binding.recyclerView.adapter = rvAdapterDetailed
+                }
+                R.id.menuItem_actionReset -> {
+                    MaterialAlertDialogBuilder(this)
+                        .setTitle("Resetovat")
+                        .setMessage("Opravdu chcete aplikaci resetovat? Tato akce nelze vrátit")
+                        .setCancelable(false)
+                        .setNegativeButton("Ne") { dialog: DialogInterface, _: Int -> dialog.cancel() }
+                        .setPositiveButton("Ano") { _: DialogInterface?, _: Int -> reset() }
+                        .create()
+                        .show()
+                }
+                R.id.menuItem_actionDeleteRunners -> {
+                    if (runnersList.isNotEmpty()) {
+                        MaterialAlertDialogBuilder(this)
+                            .setTitle("Vymazat všechna data")
+                            .setMessage("Opravdu chcete vymazat všechna data? Změny nelze vrátit")
+                            .setCancelable(false)
+                            .setNegativeButton("Ne") { dialog: DialogInterface, _: Int -> dialog.cancel() }
+                            .setPositiveButton("Ano") { _: DialogInterface?, _: Int -> deleteAllRunners() }
+                            .create()
+                            .show()
+                    } else {
+                        Toast.makeText(this@MainActivity, "Žádná data ke smazání", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+
+            true
         }
         binding.recyclerView.layoutManager = LinearLayoutManager(this@MainActivity)
-        rvAdapter =
-            RvAdapter(runnersList, object : RvAdapter.OptionsMenuLongClickListener {
+        rvAdapterBasic =
+            RvAdapterBasic(runnersList, object : RvAdapterBasic.OptionsMenuLongClickListener {
                     override fun onOptionsMenuLongClicked(position: Int): Boolean {
                         handleRecyclerViewItemLongClicked(position)
                         return true
                     }
                 })
-        binding.recyclerView.adapter = rvAdapter
+        rvAdapterDetailed =
+            RvAdapterDetailed(runnersList, object : RvAdapterDetailed.OptionsMenuLongClickListener {
+                override fun onOptionsMenuLongClicked(position: Int): Boolean {
+                    handleRecyclerViewItemLongClicked(position)
+                    return true
+                }
+            })
+        binding.recyclerView.adapter = rvAdapterBasic
 
         runnerViewModel.runners.observe(this@MainActivity) { runners ->
             val diff = runners.size - runnersList.size
@@ -109,13 +163,22 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
                     for (runner in runners)
                         runnersList.add(0, runner)
 
-                    rvAdapter.notifyItemRangeInserted(0, runnersList.size)
+                    if (listMode == BASIC) {
+                        rvAdapterBasic.notifyItemRangeInserted(0, runnersList.size)
+                    } else {
+                        rvAdapterDetailed.notifyItemRangeInserted(0, runnersList.size)
+                    }
                     binding.textViewNoData.visibility = View.GONE
                 } else if (diff == 1) {
                     runnersList.add(0, runners.last())
 
-                    rvAdapter.notifyItemInserted(0)
-                    rvAdapter.notifyItemRangeChanged(0, runnersList.size)
+                    if (listMode == BASIC) {
+                        rvAdapterBasic.notifyItemInserted(0)
+                        rvAdapterBasic.notifyItemRangeChanged(0, runnersList.size)
+                    } else {
+                        rvAdapterDetailed.notifyItemInserted(0)
+                        rvAdapterDetailed.notifyItemRangeChanged(0, runnersList.size)
+                    }
 
                     if (runnersList.size == 1)
                         binding.textViewNoData.visibility = View.GONE
@@ -123,8 +186,13 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
                     for (runner in runners.takeLast(diff))
                         runnersList.add(0, runner)
 
-                    rvAdapter.notifyItemRangeInserted(0, diff)
-                    rvAdapter.notifyItemRangeChanged(0, runnersList.size)
+                    if (listMode == BASIC) {
+                        rvAdapterBasic.notifyItemRangeInserted(0, diff)
+                        rvAdapterBasic.notifyItemRangeChanged(0, runnersList.size)
+                    } else {
+                        rvAdapterDetailed.notifyItemRangeInserted(0, diff)
+                        rvAdapterDetailed.notifyItemRangeChanged(0, runnersList.size)
+                    }
 
                     if (runnersList.size > 1)
                         binding.textViewNoData.visibility = View.GONE
@@ -243,29 +311,24 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
 
     @SuppressLint("RestrictedApi", "DiscouragedPrivateApi")
     private fun handleRecyclerViewItemLongClicked(position: Int) {
-        val popupMenu = PopupMenu(this@MainActivity, binding.recyclerView[position].findViewById(R.id.textView_runnerName))
+        val popupMenu = PopupMenu(
+            this@MainActivity,
+            binding.recyclerView[position].findViewById(
+                if (listMode == BASIC)
+                    R.id.textView_runnerName_listBasic
+                else
+                    R.id.textView_runnerName_listDetailed
+                )
+        )
         popupMenu.inflate(R.menu.menu_list_item)
         popupMenu.setOnMenuItemClickListener {
             when (it.itemId) {
-                R.id.menuItem_listItemDelete -> {
-                    MaterialAlertDialogBuilder(this@MainActivity)
-                        .setTitle("Smazat položku")
-                        .setMessage("Opravdu chcete smazat tuto položku? Tato akce nelze vrátit")
-                        .setCancelable(false)
-                        .setNegativeButton("Ne") { dialog: DialogInterface, _: Int -> dialog.cancel() }
-                        .setPositiveButton("Ano") { _: DialogInterface?, _: Int -> deleteRunner(position) }
-                        .create()
-                        .show()
-
-                    true
-                }
+                R.id.menuItem_listItemDelete -> { showDeleteRunnerDialog(position) }
                 R.id.menuItem_listItemEdit -> {
                     Toast.makeText(this@MainActivity , "Position: $position\nSize: ${runnersList.size}" , Toast.LENGTH_SHORT).show()
-
-                    true
                 }
-                else -> false
             }
+            true
         }
         try {
             val popup = PopupMenu::class.java.getDeclaredField("mPopup")
@@ -281,53 +344,39 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
         }
     }
 
-    @SuppressLint("RestrictedApi")
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        if (menu is MenuBuilder) menu.setOptionalIconsVisible(true)
-        menuInflater.inflate(R.menu.menu_main, menu)
-        MenuCompat.setGroupDividerEnabled(menu, true)
-        return true
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            R.id.menuItem_sendDataToPc -> {
-                // TODO: Communicate with desktop app
-                Toast.makeText(this@MainActivity, "Not yet implemented", Toast.LENGTH_SHORT).show()
-
-                true
-            }
-            R.id.menuItem_deleteAllData -> {
-                if (runnersList.isNotEmpty()) {
-                    MaterialAlertDialogBuilder(this)
-                        .setTitle("Vymazat všechna data")
-                        .setMessage("Opravdu chcete vymazat všechna data? Změny nelze vrátit")
-                        .setCancelable(false)
-                        .setNegativeButton("Ne") { dialog: DialogInterface, _: Int -> dialog.cancel() }
-                        .setPositiveButton("Ano") { _: DialogInterface?, _: Int -> deleteAllRunners() }
-                        .create()
-                        .show()
-                } else {
-                    Toast.makeText(this@MainActivity, "Žádná data ke smazání", Toast.LENGTH_SHORT).show()
-                }
-
-                true
-            }
-            R.id.menuItem_reset -> {
-                MaterialAlertDialogBuilder(this)
-                    .setTitle("Resetovat")
-                    .setMessage("Opravdu chcete aplikaci resetovat? Tato akce nelze vrátit")
-                    .setCancelable(false)
-                    .setNegativeButton("Ne") { dialog: DialogInterface, _: Int -> dialog.cancel() }
-                    .setPositiveButton("Ano") { _: DialogInterface?, _: Int -> reset() }
-                    .create()
-                    .show()
-
-                true
-            }
-            else -> super.onOptionsItemSelected(item)
-        }
-    }
+//    @SuppressLint("RestrictedApi")
+//    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+//        if (menu is MenuBuilder) menu.setOptionalIconsVisible(true)
+//        menuInflater.inflate(R.menu.menu_main, menu)
+//        MenuCompat.setGroupDividerEnabled(menu, true)
+//        return true
+//    }
+//
+//    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+//        return when (item.itemId) {
+//            R.id.menuItem_sendDataToPc -> {
+//                // TODO: Communicate with desktop app
+//                Toast.makeText(this@MainActivity, "Not yet implemented", Toast.LENGTH_SHORT).show()
+//
+//                true
+//            }
+//            R.id.menuItem_deleteAllData -> {
+//                if (runnersList.isNotEmpty()) {
+//                    showDeleteAllRunnersDialog()
+//                } else {
+//                    Toast.makeText(this@MainActivity, "Žádná data ke smazání", Toast.LENGTH_SHORT).show()
+//                }
+//
+//                true
+//            }
+//            R.id.menuItem_reset -> {
+//                showResetDialog()
+//
+//                true
+//            }
+//            else -> super.onOptionsItemSelected(item)
+//        }
+//    }
 
     private fun startScanningNFC() {
         val options = Bundle()
@@ -345,8 +394,13 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
 
             runnersList.remove(runnersList[position])
 
-            rvAdapter.notifyItemRemoved(position)
-            rvAdapter.notifyItemRangeChanged(position, runnersList.size - position)
+            if (listMode == BASIC) {
+                rvAdapterBasic.notifyItemRemoved(position)
+                rvAdapterBasic.notifyItemRangeChanged(position, runnersList.size - position)
+            } else {
+                rvAdapterDetailed.notifyItemRemoved(position)
+                rvAdapterDetailed.notifyItemRangeChanged(position, runnersList.size - position)
+            }
 
             if (runnersList.size == 0)
                 binding.textViewNoData.visibility = View.VISIBLE
@@ -363,7 +417,11 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
             val size = runnersList.size
             runnersList.clear()
 
-            rvAdapter.notifyItemRangeRemoved(0, size)
+            if (listMode == BASIC) {
+                rvAdapterBasic.notifyItemRangeRemoved(0, size)
+            } else {
+                rvAdapterDetailed.notifyItemRangeRemoved(0, size)
+            }
             binding.textViewNoData.visibility = View.VISIBLE
         } catch (e: Exception) {
             Log.d("DB", e.stackTraceToString())
@@ -378,6 +436,39 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
             TZDatabase.getInstance(this@MainActivity).checkpointDao().reset()
         }.start()
         activityResultLauncher.launch(Intent(this@MainActivity, CheckpointActivity::class.java))
+    }
+
+    private fun showDeleteRunnerDialog(position: Int) {
+        MaterialAlertDialogBuilder(this@MainActivity)
+            .setTitle("Smazat položku")
+            .setMessage("Opravdu chcete smazat tuto položku? Tato akce nelze vrátit")
+            .setCancelable(false)
+            .setNegativeButton("Ne") { dialog: DialogInterface, _: Int -> dialog.cancel() }
+            .setPositiveButton("Ano") { _: DialogInterface?, _: Int -> deleteRunner(position) }
+            .create()
+            .show()
+    }
+
+    private fun showDeleteAllRunnersDialog() {
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Vymazat všechna data")
+            .setMessage("Opravdu chcete vymazat všechna data? Změny nelze vrátit")
+            .setCancelable(false)
+            .setNegativeButton("Ne") { dialog: DialogInterface, _: Int -> dialog.cancel() }
+            .setPositiveButton("Ano") { _: DialogInterface?, _: Int -> deleteAllRunners() }
+            .create()
+            .show()
+    }
+
+    private fun showResetDialog() {
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Resetovat")
+            .setMessage("Opravdu chcete aplikaci resetovat? Tato akce nelze vrátit")
+            .setCancelable(false)
+            .setNegativeButton("Ne") { dialog: DialogInterface, _: Int -> dialog.cancel() }
+            .setPositiveButton("Ano") { _: DialogInterface?, _: Int -> reset() }
+            .create()
+            .show()
     }
 
     private fun initNewRunnerDialog() {

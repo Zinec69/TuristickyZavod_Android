@@ -1,6 +1,6 @@
 <resources>
     <!--  General  -->
-    <string name="app_name">Turistický závod</string>
+    <string name="app_name" translatable="false">Turistický závod</string>
 
     <!--  activity_main  -->
     <string name="text_view_no_data">Zatím žádná data</string>
@@ -30,15 +30,25 @@
     <string name="edit_text_runner_id_hint">Číslo běžce</string>
     <string name="edit_text_runner_name_hint">Jméno</string>
     <string name="edit_text_runner_team_hint">Oddíl</string>
-    <string name="text_view_penalty_minutes">Trestné minuty/sekundy</string>
-    <string name="text_view_penalty_minutes_colon">:</string>
+    <string name="text_view_penalty_minutes">Trestné minuty</string>
+    <string name="text_view_penalty_minutes_colon" translatable="false">:</string>
     <string name="text_view_runner_delay">Zdržení:</string>
 
-    <!--  list_runners  -->
-    <string name="text_view_runner_id_placeholder">1</string>
+    <!--  list_items  -->
+    <string name="text_view_runner_id_placeholder" translatable="false">1</string>
     <string name="text_view_runner_name_placeholder">Jméno Příjmení</string>
     <string name="text_view_runner_team_placeholder">Oddíl</string>
     <string name="image_disqualified_content_description">Běžec diskvalifikován</string>
+
+    <!--  list_item_detailed  -->
+    <string name="text_view_start_time">Start:</string>
+    <string name="text_view_start_time_placeholder" translatable="false">09:35:51</string>
+    <string name="text_view_finish_time">Finiš:</string>
+    <string name="text_view_finish_time_placeholder" translatable="false">10:12:34</string>
+    <string name="text_view_time_waited">Zdržení:</string>
+    <string name="text_view_time_waited_placeholder" translatable="false">05:15</string>
+    <string name="text_view_penalty_minutes_list">Trestné minuty</string>
+    <string name="text_view_penalty_minutes_placeholder" translatable="false">10:00</string>
 
     <!--  activity_checkpoint  -->
     <string name="toolbar_subtitle_checkpoint">Nastavení stanoviště</string>
@@ -46,5 +56,8 @@
     <string name="text_input_layout_hint_name">Vaše jméno</string>
     <string name="button_save_checkpoint">Uložit</string>
     <string name="text_view_initial_info">Úvodní informace</string>
+
+    <!--  header_navigation_drawer  -->
+    <string name="text_view_navigation_drawer_header">Menu</string>
 
 </resources>

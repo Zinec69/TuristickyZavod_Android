@@ -11,7 +11,7 @@
     android:paddingVertical="3dp">
 
     <com.google.android.material.card.MaterialCardView
-        android:id="@+id/cardView"
+        android:id="@+id/cardView_listBasic"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         style="@style/Widget.Material3.CardView.Elevated"
@@ -25,7 +25,7 @@
             android:orientation="horizontal">
 
             <TextView
-                android:id="@+id/textView_runnerId"
+                android:id="@+id/textView_runnerId_listBasic"
                 android:layout_width="70dp"
                 android:layout_height="match_parent"
                 android:gravity="center"
@@ -35,11 +35,11 @@
                 android:text="@string/text_view_runner_id_placeholder" />
 
             <com.google.android.material.divider.MaterialDivider
-                android:id="@+id/divider_vertical"
+                android:id="@+id/divider_vertical_listBasic"
                 android:layout_width="1dp"
                 android:layout_height="45dp"
                 android:layout_gravity="center"
-                app:dividerColor="@color/divider_vertical"/>
+                app:dividerColor="@color/divider"/>
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -50,7 +50,7 @@
                 android:gravity="center_vertical">
 
                 <TextView
-                    android:id="@+id/textView_runnerName"
+                    android:id="@+id/textView_runnerName_listBasic"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="1dp"
@@ -59,7 +59,7 @@
                     android:text="@string/text_view_runner_name_placeholder" />
 
                 <TextView
-                    android:id="@+id/textView_runnerTeam"
+                    android:id="@+id/textView_runnerTeam_listBasic"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textColor="@color/runnerInfo"
@@ -69,7 +69,7 @@
             </LinearLayout>
 
             <ImageView
-                android:id="@+id/imageView_disqualified"
+                android:id="@+id/imageView_disqualified_listBasic"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_marginEnd="5dp"

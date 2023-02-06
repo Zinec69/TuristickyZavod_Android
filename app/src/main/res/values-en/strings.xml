@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Turistický závod</string>
+    <string name="text_view_no_data">No data</string>
+    <string name="text_view_station">Checkpoint:</string>
+    <string name="text_view_referee">Referee:</string>
+    <string name="fab">New record</string>
+    <string name="fab_content_description">Add new record</string>
+    <string name="text_view_disqualified">Disqualified</string>
+    <string name="text_view_runner_info">Runner info</string>
+    <string name="menu_item_send_data_to_pc">Send data to PC</string>
+    <string name="menu_item_delete_all_data">Clear runner list</string>
+    <string name="menu_item_reset">Reset</string>
+    <string name="menu_item_edit_item">Edit</string>
+    <string name="menu_item_delete_item">Delete</string>
+    <string name="button_save">Save</string>
+    <string name="button_cancel">Cancel</string>
+    <string name="text_view_nfc_off">NFC is off</string>
+    <string name="button_turn_on_nfc">Turn NFC on</string>
+    <string name="edit_text_runner_id_hint">Runner number</string>
+    <string name="edit_text_runner_name_hint">Name</string>
+    <string name="edit_text_runner_team_hint">Team</string>
+    <string name="text_view_penalty_minutes">Penalty mintues</string>
+    <string name="text_view_runner_delay">Holdup:</string>
+    <string name="text_view_runner_name_placeholder">Name Surname</string>
+    <string name="text_view_runner_team_placeholder">Team</string>
+    <string name="image_disqualified_content_description">Runner disqualified</string>
+    <string name="text_view_start_time">Start:</string>
+    <string name="text_view_finish_time">Finish:</string>
+    <string name="text_view_time_waited">Holdup:</string>
+    <string name="text_view_penalty_minutes_list">Penalty minutes:</string>
+    <string name="toolbar_subtitle_checkpoint">Checkpoint settings</string>
+    <string name="text_input_layout_hint_checkpoint">Checkpoint *</string>
+    <string name="text_input_layout_hint_name">Your name</string>
+    <string name="button_save_checkpoint">Save</string>
+    <string name="text_view_initial_info">Initial information</string>
+    <string name="text_view_navigation_drawer_header">Menu</string>
+</resources>
