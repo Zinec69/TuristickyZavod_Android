@@ -2,20 +2,19 @@ package com.example.turisticky_zavod
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.MotionEvent
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
-import android.widget.LinearLayout
 import android.widget.Toast
-import android.window.OnBackInvokedDispatcher
 import androidx.activity.addCallback
-import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.children
+import androidx.lifecycle.lifecycleScope
 import com.example.turisticky_zavod.databinding.ActivityCheckpointBinding
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class CheckpointActivity: AppCompatActivity() {
 
@@ -71,9 +70,9 @@ class CheckpointActivity: AppCompatActivity() {
             setResult(RESULT_OK, intent)
 
             getSharedPreferences("TZ", MODE_PRIVATE).edit().putString("referee", binding.editTextRefereeName.text.toString()).apply()
-            Thread {
+            lifecycleScope.launch(Dispatchers.IO) {
                 TZDatabase.getInstance(this@CheckpointActivity).checkpointDao().setActive(binding.autoCompleteTextViewMenuCheckpoints.text.toString())
-            }.start()
+            }
 
             finish()
         }

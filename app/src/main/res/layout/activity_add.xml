@@ -42,6 +42,7 @@
                     android:paddingVertical="2dp">
 
                     <TextView
+                        android:id="@+id/textView_disqualified"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="5dp"
@@ -203,12 +204,13 @@
             </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardView_penalty"
+                android:id="@+id/cardView_penaltyMinutes"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 style="@style/Widget.Material3.CardView.Elevated"
-                app:cardCornerRadius="20dp">
+                app:cardCornerRadius="20dp"
+                android:visibility="visible">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -263,6 +265,59 @@
                 </LinearLayout>
 
             </com.google.android.material.card.MaterialCardView>
+
+<!--            <com.google.android.material.card.MaterialCardView-->
+<!--                android:id="@+id/cardView_distanceEstimate"-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:layout_marginTop="10dp"-->
+<!--                style="@style/Widget.Material3.CardView.Elevated"-->
+<!--                app:cardCornerRadius="20dp"-->
+<!--                android:visibility="gone">-->
+
+<!--                <LinearLayout-->
+<!--                    android:layout_width="match_parent"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:orientation="vertical"-->
+<!--                    android:padding="5dp">-->
+
+<!--                    <TextView-->
+<!--                        android:id="@+id/textView_distanceEstimate"-->
+<!--                        android:layout_width="match_parent"-->
+<!--                        android:layout_height="wrap_content"-->
+<!--                        android:layout_marginHorizontal="10dp"-->
+<!--                        android:layout_marginTop="5dp"-->
+<!--                        android:gravity="center"-->
+<!--                        android:text="Odhadnutá vzdálenost"-->
+<!--                        android:textColor="?attr/colorPrimaryDark"-->
+<!--                        android:textSize="15sp" />-->
+
+<!--                    <com.google.android.material.textfield.TextInputLayout-->
+<!--                        android:id="@+id/textInputLayout_distanceEstimate"-->
+<!--                        android:layout_width="match_parent"-->
+<!--                        android:layout_height="wrap_content"-->
+<!--                        android:layout_marginHorizontal="10dp"-->
+<!--                        android:layout_marginTop="10dp"-->
+<!--                        android:layout_marginBottom="25dp"-->
+<!--                        android:textColorHint="?attr/colorPrimaryDark"-->
+<!--                        app:boxCornerRadiusBottomEnd="10dp"-->
+<!--                        app:boxCornerRadiusBottomStart="10dp"-->
+<!--                        app:boxCornerRadiusTopEnd="10dp"-->
+<!--                        app:boxCornerRadiusTopStart="10dp">-->
+
+<!--                        <com.google.android.material.textfield.TextInputEditText-->
+<!--                            android:id="@+id/editText_distanceEstimate"-->
+<!--                            android:layout_width="match_parent"-->
+<!--                            android:layout_height="wrap_content"-->
+<!--                            android:hint="Vzdálenost [m]"-->
+<!--                            android:inputType="number"-->
+<!--                            android:textSize="15sp" />-->
+
+<!--                    </com.google.android.material.textfield.TextInputLayout>-->
+
+<!--                </LinearLayout>-->
+
+<!--            </com.google.android.material.card.MaterialCardView>-->
 
         </LinearLayout>
 

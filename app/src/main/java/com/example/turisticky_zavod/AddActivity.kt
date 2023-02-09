@@ -22,11 +22,13 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.ViewCompat
 import androidx.core.view.children
+import androidx.lifecycle.lifecycleScope
 import com.airbnb.lottie.LottieAnimationView
 import com.example.turisticky_zavod.databinding.ActivityAddBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.io.IOException
-import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
@@ -50,8 +52,13 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
 
     private val runnerViewModel: RunnerViewModel by viewModels()
 
+    private lateinit var currentCheckpoint: Checkpoint
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // TODO: možná přidat možnost čekání pro všechny
+        // TODO: možná vymazat azimuty, dřeviny, TT a KPČ a možná je zpracovávat v cíli
 
         binding = ActivityAddBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -62,6 +69,10 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
         onBackPressedDispatcher.addCallback(this@AddActivity) { handleBackButtonPressed() }
         binding.toolbarAdd.setNavigationOnClickListener { handleBackButtonPressed() }
         binding.buttonCancel.setOnClickListener { handleBackButtonPressed() }
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            currentCheckpoint = TZDatabase.getInstance(this@AddActivity).checkpointDao().getActive()!!
+        }.start()
 
         val runner =
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU)
@@ -74,7 +85,7 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
             binding.editTextRunnerName.isEnabled = true
             binding.editTextRunnerTeam.isEnabled = true
             binding.cardViewDisqualified.visibility = View.GONE
-            binding.cardViewPenalty.visibility = View.GONE
+            binding.cardViewPenaltyMinutes.visibility = View.GONE
             binding.buttonAddToQueue.visibility = View.GONE
             binding.editTextRunnerId.setTextColor(getColor(R.color.edit_text_default))
             binding.editTextRunnerName.setTextColor(getColor(R.color.edit_text_default))
@@ -83,6 +94,19 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
             binding.editTextRunnerId.setText(runner.runnerId.toString())
             binding.editTextRunnerName.setText(runner.name)
             binding.editTextRunnerTeam.setText(runner.team)
+            when (currentCheckpoint.id) {
+                4, 7, 9 -> {
+                    binding.cardViewDisqualified.isEnabled = false
+                    binding.switchDisqualified.isEnabled = false
+                    binding.textViewDisqualified.isEnabled = false
+                }
+                5 -> {
+                    binding.buttonAddToQueue.visibility = View.GONE
+                }
+                2, 3, 6 -> {
+                    binding.cardViewPenaltyMinutes.visibility = View.GONE
+                }
+            }
             binding.switchDisqualified.isChecked = runner.disqualified
 
             runnersQueue.add(Pair(runner, null))
@@ -94,6 +118,7 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
                 binding.editTextRunnerTeam.text!!.isEmpty()) {
                 Toast.makeText(this@AddActivity, "Všechna pole jsou povinná", Toast.LENGTH_SHORT).show()
             } else {
+                loseFocus(it)
                 stage = WRITING
                 scanForRunner()
             }

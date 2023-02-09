@@ -21,20 +21,20 @@ interface CheckpointDao {
     fun getActive(): Checkpoint?
 
     @Query("UPDATE checkpoint SET active = TRUE WHERE name = :name")
-    fun setActive(name: String)
+    suspend fun setActive(name: String)
 
     @Query("UPDATE checkpoint SET active = FALSE WHERE active = TRUE")
-    fun reset()
+    suspend fun reset()
 
     @Insert
-    fun insert(checkpoint: Checkpoint)
+    suspend fun insert(checkpoint: Checkpoint)
 
     @Update
-    fun update(checkpoint: Checkpoint)
+    suspend fun update(checkpoint: Checkpoint)
 
     @Delete
-    fun delete(checkpoint: Checkpoint)
+    suspend fun delete(checkpoint: Checkpoint)
 
     @Query("DELETE FROM checkpoint")
-    fun deleteAll()
+    suspend fun deleteAll()
 }

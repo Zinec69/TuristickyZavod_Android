@@ -20,12 +20,16 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.WindowCompat
 import androidx.core.view.get
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.airbnb.lottie.LottieAnimationView
 import com.example.turisticky_zavod.NFCHelper.NfcAvailability
 import com.example.turisticky_zavod.databinding.ActivityMainBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.io.IOException
 
 
@@ -116,25 +120,11 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
                     binding.recyclerView.adapter = rvAdapterDetailed
                 }
                 R.id.menuItem_actionReset -> {
-                    MaterialAlertDialogBuilder(this)
-                        .setTitle("Resetovat")
-                        .setMessage("Opravdu chcete aplikaci resetovat? Tato akce nelze vrátit")
-                        .setCancelable(false)
-                        .setNegativeButton("Ne") { dialog: DialogInterface, _: Int -> dialog.cancel() }
-                        .setPositiveButton("Ano") { _: DialogInterface?, _: Int -> reset() }
-                        .create()
-                        .show()
+                    showResetDialog()
                 }
                 R.id.menuItem_actionDeleteRunners -> {
                     if (runnersList.isNotEmpty()) {
-                        MaterialAlertDialogBuilder(this)
-                            .setTitle("Vymazat všechna data")
-                            .setMessage("Opravdu chcete vymazat všechna data? Změny nelze vrátit")
-                            .setCancelable(false)
-                            .setNegativeButton("Ne") { dialog: DialogInterface, _: Int -> dialog.cancel() }
-                            .setPositiveButton("Ano") { _: DialogInterface?, _: Int -> deleteAllRunners() }
-                            .create()
-                            .show()
+                        showDeleteAllRunnersDialog()
                     } else {
                         Toast.makeText(this@MainActivity, "Žádná data ke smazání", Toast.LENGTH_SHORT).show()
                     }
@@ -158,7 +148,7 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
                     return true
                 }
             })
-        binding.recyclerView.adapter = if (listMode == BASIC) rvAdapterBasic else rvAdapterDetailed
+        binding.recyclerView.adapter = getCurrentRvAdapter()
 
         runnerViewModel.runners.observe(this@MainActivity) { runners ->
             val diff = runners.size - runnersList.size
@@ -168,22 +158,13 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
                     for (runner in runners)
                         runnersList.add(0, runner)
 
-                    if (listMode == BASIC) {
-                        rvAdapterBasic.notifyItemRangeInserted(0, runnersList.size)
-                    } else {
-                        rvAdapterDetailed.notifyItemRangeInserted(0, runnersList.size)
-                    }
+                    getCurrentRvAdapter().notifyItemRangeInserted(0, runnersList.size)
                     binding.textViewNoData.visibility = View.GONE
                 } else if (diff == 1) {
                     runnersList.add(0, runners.last())
 
-                    if (listMode == BASIC) {
-                        rvAdapterBasic.notifyItemInserted(0)
-                        rvAdapterBasic.notifyItemRangeChanged(0, runnersList.size)
-                    } else {
-                        rvAdapterDetailed.notifyItemInserted(0)
-                        rvAdapterDetailed.notifyItemRangeChanged(0, runnersList.size)
-                    }
+                    getCurrentRvAdapter().notifyItemInserted(0)
+                    getCurrentRvAdapter().notifyItemRangeChanged(0, runnersList.size)
 
                     if (runnersList.size == 1)
                         binding.textViewNoData.visibility = View.GONE
@@ -191,13 +172,8 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
                     for (runner in runners.takeLast(diff))
                         runnersList.add(0, runner)
 
-                    if (listMode == BASIC) {
-                        rvAdapterBasic.notifyItemRangeInserted(0, diff)
-                        rvAdapterBasic.notifyItemRangeChanged(0, runnersList.size)
-                    } else {
-                        rvAdapterDetailed.notifyItemRangeInserted(0, diff)
-                        rvAdapterDetailed.notifyItemRangeChanged(0, runnersList.size)
-                    }
+                    getCurrentRvAdapter().notifyItemRangeInserted(0, diff)
+                    getCurrentRvAdapter().notifyItemRangeChanged(0, runnersList.size)
 
                     if (runnersList.size > 1)
                         binding.textViewNoData.visibility = View.GONE
@@ -258,19 +234,23 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
                                 }
                                 return
                             }
-                            runnersList[i].finishTime = System.currentTimeMillis()
                             runner = runnersList[i]
+                            runner.finishTime = System.currentTimeMillis()
+                            runnersList.removeAt(i)
+                            runnersList.add(0, runner)
                             nfcHelper.writeRunnerOnTag(ndef, runner)
                             runnerViewModel.update(runner)
                             runOnUiThread {
-                                rvAdapterDetailed.notifyItemChanged(i)
+                                getCurrentRvAdapter().notifyItemInserted(0)
+                                getCurrentRvAdapter().notifyItemRemoved(i)
+                                getCurrentRvAdapter().notifyItemRangeChanged(0, i)
                                 scanSuccess(runner, false)
                             }
                             return
                         }
                     }
                     runOnUiThread {
-                        scanFail(null, "Tento běžec nemá záznam")
+                        scanFail(null, "Tento běžec nemá záznam o startu")
                     }
                     return
                 }
@@ -399,40 +379,6 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
         }
     }
 
-//    @SuppressLint("RestrictedApi")
-//    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-//        if (menu is MenuBuilder) menu.setOptionalIconsVisible(true)
-//        menuInflater.inflate(R.menu.menu_main, menu)
-//        MenuCompat.setGroupDividerEnabled(menu, true)
-//        return true
-//    }
-//
-//    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-//        return when (item.itemId) {
-//            R.id.menuItem_sendDataToPc -> {
-//                // TODO: Communicate with desktop app
-//                Toast.makeText(this@MainActivity, "Not yet implemented", Toast.LENGTH_SHORT).show()
-//
-//                true
-//            }
-//            R.id.menuItem_deleteAllData -> {
-//                if (runnersList.isNotEmpty()) {
-//                    showDeleteAllRunnersDialog()
-//                } else {
-//                    Toast.makeText(this@MainActivity, "Žádná data ke smazání", Toast.LENGTH_SHORT).show()
-//                }
-//
-//                true
-//            }
-//            R.id.menuItem_reset -> {
-//                showResetDialog()
-//
-//                true
-//            }
-//            else -> super.onOptionsItemSelected(item)
-//        }
-//    }
-
     private fun startScanningNFC() {
         val options = Bundle()
         options.putInt(EXTRA_READER_PRESENCE_CHECK_DELAY, 250)
@@ -449,13 +395,8 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
 
             runnersList.remove(runnersList[position])
 
-            if (listMode == BASIC) {
-                rvAdapterBasic.notifyItemRemoved(position)
-                rvAdapterBasic.notifyItemRangeChanged(position, runnersList.size - position)
-            } else {
-                rvAdapterDetailed.notifyItemRemoved(position)
-                rvAdapterDetailed.notifyItemRangeChanged(position, runnersList.size - position)
-            }
+            getCurrentRvAdapter().notifyItemRemoved(position)
+            getCurrentRvAdapter().notifyItemRangeChanged(position, runnersList.size - position)
 
             if (runnersList.size == 0)
                 binding.textViewNoData.visibility = View.VISIBLE
@@ -472,11 +413,7 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
             val size = runnersList.size
             runnersList.clear()
 
-            if (listMode == BASIC) {
-                rvAdapterBasic.notifyItemRangeRemoved(0, size)
-            } else {
-                rvAdapterDetailed.notifyItemRangeRemoved(0, size)
-            }
+            getCurrentRvAdapter().notifyItemRangeRemoved(0, size)
             binding.textViewNoData.visibility = View.VISIBLE
         } catch (e: Exception) {
             Log.d("DB", e.stackTraceToString())
@@ -487,9 +424,9 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
     private fun reset() {
         deleteAllRunners()
         getSharedPreferences("TZ", MODE_PRIVATE).edit().remove("referee").apply();
-        Thread {
+        lifecycleScope.launch(Dispatchers.IO) {
             TZDatabase.getInstance(this@MainActivity).checkpointDao().reset()
-        }.start()
+        }
         activityResultLauncher.launch(Intent(this@MainActivity, CheckpointActivity::class.java))
     }
 
@@ -588,5 +525,9 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
             .alpha(0f)
             .withEndAction { binding.fabFinish.visibility = View.GONE }
             .start()
+    }
+
+    private fun getCurrentRvAdapter(): RecyclerView.Adapter<out RecyclerView.ViewHolder> {
+        return if (listMode == BASIC) rvAdapterBasic else rvAdapterDetailed
     }
 }

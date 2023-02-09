@@ -3,6 +3,10 @@ package com.example.turisticky_zavod
 import android.content.Context
 import androidx.room.*
 import androidx.sqlite.db.SupportSQLiteDatabase
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 @Database(entities = [Runner::class, Checkpoint::class], version = 24)
 abstract class TZDatabase : RoomDatabase() {
@@ -35,21 +39,22 @@ abstract class TZDatabase : RoomDatabase() {
     }
 }
 
+@OptIn(DelicateCoroutinesApi::class)
 private fun populateCheckpoints(context: Context) {
-    Thread {
+    GlobalScope.launch(Dispatchers.IO) {
         TZDatabase.getInstance(context).checkpointDao().apply {
-            insert(Checkpoint("Start/cíl"))
-            insert(Checkpoint("Odhad vzdálenosti"))
-            insert(Checkpoint("Stavba stanu"))
-            insert(Checkpoint("Orientace mapy"))
-            insert(Checkpoint("Azimutové úseky"))
-            insert(Checkpoint("Lanová lávka"))
-            insert(Checkpoint("Uzlování"))
-            insert(Checkpoint("Plížení"))
-            insert(Checkpoint("Hod kriketovým míčkem"))
-            insert(Checkpoint("Turistické a topografické značky"))
-            insert(Checkpoint("Poznávání dřevin"))
-            insert(Checkpoint("Kulturně poznávací činnost"))
+            insert(Checkpoint("Start/cíl", false, 1))
+            insert(Checkpoint("Odhad vzdálenosti", false, 2))
+            insert(Checkpoint("Stavba stanu", false, 3))
+            insert(Checkpoint("Orientace mapy", false, 4))
+            insert(Checkpoint("Azimutové úseky", false, 5))
+            insert(Checkpoint("Lanová lávka", false, 6))
+            insert(Checkpoint("Uzlování", false, 7))
+            insert(Checkpoint("Plížení", false, 8))
+            insert(Checkpoint("Hod kriketovým míčkem", false, 9))
+            insert(Checkpoint("Turistické a topografické značky", false, 10))
+            insert(Checkpoint("Poznávání dřevin", false, 11))
+            insert(Checkpoint("Kulturně poznávací činnost", false, 12))
         }
-    }.start()
+    }
 }
