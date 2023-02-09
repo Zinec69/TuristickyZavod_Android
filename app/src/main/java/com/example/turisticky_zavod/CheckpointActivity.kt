@@ -10,6 +10,7 @@ import android.widget.LinearLayout
 import android.widget.Toast
 import android.window.OnBackInvokedDispatcher
 import androidx.activity.addCallback
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.children
@@ -19,8 +20,6 @@ import com.google.android.material.textfield.MaterialAutoCompleteTextView
 class CheckpointActivity: AppCompatActivity() {
 
     private lateinit var binding: ActivityCheckpointBinding
-
-    private lateinit var checkpoints: Array<String>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,7 +43,7 @@ class CheckpointActivity: AppCompatActivity() {
         ViewCompat.setWindowInsetsAnimationCallback(button, insetsWithKeyboardAnimationCallback)
 
         Thread {
-            checkpoints = TZDatabase.getInstance(this@CheckpointActivity).checkpointDao().getNames()
+            val checkpoints = TZDatabase.getInstance(this@CheckpointActivity).checkpointDao().getNames()
             runOnUiThread {
                 (binding.autoCompleteTextViewMenuCheckpoints as? MaterialAutoCompleteTextView)?.setSimpleItems(checkpoints)
             }
@@ -71,14 +70,9 @@ class CheckpointActivity: AppCompatActivity() {
             intent.putExtra("checkpoint", binding.autoCompleteTextViewMenuCheckpoints.text)
             setResult(RESULT_OK, intent)
 
+            getSharedPreferences("TZ", MODE_PRIVATE).edit().putString("referee", binding.editTextRefereeName.text.toString()).apply()
             Thread {
                 TZDatabase.getInstance(this@CheckpointActivity).checkpointDao().setActive(binding.autoCompleteTextViewMenuCheckpoints.text.toString())
-                val currentReferee = TZDatabase.getInstance(this@CheckpointActivity).refereeDao().get()
-                if (currentReferee == null) {
-                    TZDatabase.getInstance(this@CheckpointActivity).refereeDao().insert(Referee(binding.editTextRefereeName.text.toString()))
-                } else {
-                    TZDatabase.getInstance(this@CheckpointActivity).refereeDao().update(Referee(binding.editTextRefereeName.text.toString()))
-                }
             }.start()
 
             finish()

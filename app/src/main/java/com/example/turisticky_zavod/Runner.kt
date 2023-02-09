@@ -14,7 +14,7 @@ data class Runner(
     val name: String,
     val team: String,
     val startTime: Long,
-    val finishTime: Long? = null,
+    var finishTime: Long? = null,
     var timeWaited: Int = 0,
     var penaltySeconds: Int = 0,
     var disqualified: Boolean = false,

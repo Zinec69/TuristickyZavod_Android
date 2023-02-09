@@ -1,12 +1,6 @@
 package com.example.turisticky_zavod
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.viewModelScope
 import androidx.room.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 @Entity
 data class Checkpoint(

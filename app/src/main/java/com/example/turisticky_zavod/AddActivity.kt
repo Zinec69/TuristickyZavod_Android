@@ -65,20 +65,38 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
 
         val runner =
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU)
-                intent.getParcelableExtra("runner")!!
+                intent.getParcelableExtra("runner")
             else
-                intent.getParcelableExtra("runner", Runner::class.java)!!
+                intent.getParcelableExtra("runner", Runner::class.java)
 
-        binding.editTextRunnerId.setText(runner.runnerId.toString())
-        binding.editTextRunnerName.setText(runner.name)
-        binding.editTextRunnerTeam.setText(runner.team)
-        binding.switchDisqualified.isChecked = runner.disqualified
+        if (runner == null) {
+            binding.editTextRunnerId.isEnabled = true
+            binding.editTextRunnerName.isEnabled = true
+            binding.editTextRunnerTeam.isEnabled = true
+            binding.cardViewDisqualified.visibility = View.GONE
+            binding.cardViewPenalty.visibility = View.GONE
+            binding.buttonAddToQueue.visibility = View.GONE
+            binding.editTextRunnerId.setTextColor(getColor(R.color.edit_text_default))
+            binding.editTextRunnerName.setTextColor(getColor(R.color.edit_text_default))
+            binding.editTextRunnerTeam.setTextColor(getColor(R.color.edit_text_default))
+        } else {
+            binding.editTextRunnerId.setText(runner.runnerId.toString())
+            binding.editTextRunnerName.setText(runner.name)
+            binding.editTextRunnerTeam.setText(runner.team)
+            binding.switchDisqualified.isChecked = runner.disqualified
 
-        runnersQueue.add(Pair(runner, null))
+            runnersQueue.add(Pair(runner, null))
+        }
 
         binding.buttonSave.setOnClickListener {
-            stage = WRITING
-            scanForRunner()
+            if (binding.editTextRunnerId.text!!.isEmpty() ||
+                binding.editTextRunnerName.text!!.isEmpty() ||
+                binding.editTextRunnerTeam.text!!.isEmpty()) {
+                Toast.makeText(this@AddActivity, "Všechna pole jsou povinná", Toast.LENGTH_SHORT).show()
+            } else {
+                stage = WRITING
+                scanForRunner()
+            }
         }
         binding.coordinatorLayoutAdd.setOnClickListener { view: View -> loseFocus(view) }
         binding.toolbarAdd.setOnClickListener { view: View -> loseFocus(view) }
@@ -110,7 +128,7 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
 
         val colorsLayout = arrayOf(ColorDrawable(getColor(R.color.background_layout_normal)), ColorDrawable(getColor(R.color.background_layout_disqualified)))
         val colorsToolbar = arrayOf(ColorDrawable(getColor(R.color.background_layout_normal)), ColorDrawable(getColor(R.color.background_layout_disqualified)))
-        if (runner.disqualified) {
+        if (runner?.disqualified == true) {
             binding.root.background = ColorDrawable(getColor(R.color.background_layout_disqualified))
             binding.toolbarAdd.background = ColorDrawable(getColor(R.color.background_layout_disqualified))
             colorsLayout.reverse()
@@ -187,6 +205,21 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
             try {
                 ndef.connect()
 
+                if (runnersQueue.isEmpty()) {
+                    val runner = Runner(
+                        binding.editTextRunnerId.text!!.toString().toInt(),
+                        binding.editTextRunnerName.text!!.dropLastWhile { c -> c.isWhitespace() }.toString(),
+                        binding.editTextRunnerTeam.text!!.dropLastWhile { c -> c.isWhitespace() }.toString(),
+                        System.currentTimeMillis()
+                    )
+                    nfcHelper.writeRunnerOnTag(ndef, runner)
+                    runnerViewModel.insert(runner)
+                    runOnUiThread {
+                        scanSuccess(runner)
+                    }
+                    return
+                }
+
                 var runner = nfcHelper.readRunner(ndef)
 
                 if (stage == WRITING && runner.runnerId != runnersQueue[0].first.runnerId) {
@@ -197,7 +230,7 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
                 }
                 if (runnerViewModel.getByID(runner.runnerId) != null) {
                     runOnUiThread {
-                        scanFail(null, "Tento člověk již byl přidán")
+                        scanFail(null, "Tento běžec již byl přidán")
                     }
                     return
                 }
@@ -205,7 +238,6 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
                     runner = getUpdatedRunner()
 
                     nfcHelper.writeRunnerOnTag(ndef, runner)
-
                     runnerViewModel.insert(runner)
                 }
 
@@ -250,7 +282,8 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
                 Toast.makeText(this@AddActivity, "Běžec č. ${runner.runnerId} přidán do fronty", Toast.LENGTH_SHORT).show()
             } else {
                 Toast.makeText(this@AddActivity, "Běžec č. ${runner.runnerId} úspěšně uložen", Toast.LENGTH_SHORT).show()
-                runnersQueue.removeAt(0)
+                if (runnersQueue.isNotEmpty())
+                    runnersQueue.removeAt(0)
 
                 if (runnersQueue.isEmpty()) {
                     setResult(RESULT_OK)
@@ -327,7 +360,8 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
             .setCancelable(false)
             .setNegativeButton("Ne") { dialog: DialogInterface, _: Int -> dialog.cancel() }
             .setPositiveButton("Ano") { _: DialogInterface?, _: Int ->
-                runnersQueue.removeAt(0)
+                if (runnersQueue.isNotEmpty())
+                    runnersQueue.removeAt(0)
 
                 if (runnersQueue.isEmpty()) {
                     finish()

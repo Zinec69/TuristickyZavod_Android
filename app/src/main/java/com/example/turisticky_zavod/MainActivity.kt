@@ -11,17 +11,13 @@ import android.nfc.TagLostException
 import android.nfc.tech.MifareClassic
 import android.os.Bundle
 import android.util.Log
-import android.view.Menu
-import android.view.MenuItem
 import android.view.View
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.view.menu.MenuBuilder
 import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.core.view.MenuCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.get
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -29,8 +25,6 @@ import com.airbnb.lottie.LottieAnimationView
 import com.example.turisticky_zavod.NFCHelper.NfcAvailability
 import com.example.turisticky_zavod.databinding.ActivityMainBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.android.material.internal.NavigationMenu
-import com.google.android.material.internal.NavigationMenuView
 import com.google.android.material.textfield.TextInputEditText
 import java.io.IOException
 
@@ -50,6 +44,8 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
 
     private val runnerViewModel: RunnerViewModel by viewModels()
 
+    private var activeCheckpoint: Checkpoint? = null
+
     private var nfcAdapter: NfcAdapter? = null
     private var nfcHelper = NFCHelper()
 
@@ -61,9 +57,11 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
     private var activityResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             val name = result.data?.getCharSequenceExtra("name")
-            val checkpoint = result.data?.getCharSequenceExtra("checkpoint")
+            Thread {
+                activeCheckpoint = TZDatabase.getInstance(this@MainActivity).checkpointDao().getActive()
+            }.start()
             name?.let { binding.textViewRefereeNameVar.text = it }
-            binding.textViewCheckpointNameVar.text = checkpoint
+            binding.textViewCheckpointNameVar.text = result.data?.getCharSequenceExtra("checkpoint")
         }
     }
 
@@ -76,37 +74,44 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
             Toast.makeText(this@MainActivity, "Tato aplikace vyžaduje telefon s NFC", Toast.LENGTH_LONG).show()
         }
 
+        val sp = getSharedPreferences("TZ", MODE_PRIVATE)
+        if (!sp.contains("list_mode")) {
+            sp.edit().putInt("list_mode", BASIC).apply()
+        } else {
+            listMode = sp.getInt("list_mode", BASIC)
+        }
+
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         setSupportActionBar(binding.toolbarMain)
 
         Thread {
-            val checkpoint = TZDatabase.getInstance(this@MainActivity).checkpointDao().getActive()
-            if (checkpoint == null) {
-                runOnUiThread {
+            activeCheckpoint = TZDatabase.getInstance(this@MainActivity).checkpointDao().getActive()
+            runOnUiThread {
+                if (activeCheckpoint == null) {
                     activityResultLauncher.launch(Intent(this@MainActivity, CheckpointActivity::class.java))
-                }
-            } else {
-                val referee = TZDatabase.getInstance(this@MainActivity).refereeDao().get()
-                runOnUiThread {
-                    binding.textViewCheckpointNameVar.text = checkpoint.name
-                    binding.textViewRefereeNameVar.text = referee?.name
+                } else {
+                    val referee = sp.getString("referee", " - ")
+                    binding.textViewCheckpointNameVar.text = activeCheckpoint!!.name
+                    binding.textViewRefereeNameVar.text = referee
                 }
             }
         }.start()
 
         binding.toolbarMain.setNavigationOnClickListener { binding.drawerLayout.open() }
-        binding.navigationView.setCheckedItem(R.id.menuItem_viewBasic)
+        binding.navigationView.setCheckedItem(if (listMode == BASIC) R.id.menuItem_viewBasic else R.id.menuItem_viewDetailed)
         binding.navigationView.setNavigationItemSelectedListener { item ->
             item.isChecked = true
             binding.drawerLayout.close()
 
             when (item.itemId) {
                 R.id.menuItem_viewBasic -> {
+                    sp.edit().putInt("list_mode", BASIC).apply()
                     listMode = BASIC
                     binding.recyclerView.adapter = rvAdapterBasic
                 }
                 R.id.menuItem_viewDetailed -> {
+                    sp.edit().putInt("list_mode", DETAILED).apply()
                     listMode = DETAILED
                     binding.recyclerView.adapter = rvAdapterDetailed
                 }
@@ -153,7 +158,7 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
                     return true
                 }
             })
-        binding.recyclerView.adapter = rvAdapterBasic
+        binding.recyclerView.adapter = if (listMode == BASIC) rvAdapterBasic else rvAdapterDetailed
 
         runnerViewModel.runners.observe(this@MainActivity) { runners ->
             val diff = runners.size - runnersList.size
@@ -202,10 +207,33 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
 
         binding.fabAdd.setOnClickListener {
             if (nfcAdapter != null) {
-                handleScanningNewRunner()
+                Thread {
+                    if (TZDatabase.getInstance(this@MainActivity).checkpointDao().getActive()!!.id == 1) {
+                        runOnUiThread {
+                            if (binding.fabStart.visibility == View.GONE) {
+                                showStartFinishButtons()
+                            } else {
+                                hideStartFinishButtons()
+                            }
+                        }
+                    } else {
+                        runOnUiThread {
+                            handleScanningNewRunner()
+                        }
+                    }
+                }.start()
             } else {
                 Toast.makeText(this@MainActivity, "Tato aplikace vyžaduje telefon s NFC", Toast.LENGTH_LONG).show()
             }
+        }
+        binding.fabStart.setOnClickListener {
+            hideStartFinishButtons()
+            val intent = Intent(this@MainActivity, AddActivity::class.java)
+            startActivity(intent)
+        }
+        binding.fabFinish.setOnClickListener {
+            handleScanningNewRunner()
+            hideStartFinishButtons()
         }
 
         newRunnerDialogView = layoutInflater.inflate(R.layout.dialog_add, null)
@@ -219,17 +247,43 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
             try {
                 ndef.connect()
 
-                val runner = nfcHelper.readRunner(ndef)
+                var runner = nfcHelper.readRunner(ndef)
 
-                if (runnersList.find { p -> p.runnerId == runner.runnerId } != null) {
+                if (activeCheckpoint!!.id == 1) {
+                    for (i in 0 until runnersList.size) {
+                        if (runnersList[i].runnerId == runner.runnerId) {
+                            if (runnersList[i].finishTime != null) {
+                                runOnUiThread {
+                                    scanFail(null, "Tento běžec již byl zpracován")
+                                }
+                                return
+                            }
+                            runnersList[i].finishTime = System.currentTimeMillis()
+                            runner = runnersList[i]
+                            nfcHelper.writeRunnerOnTag(ndef, runner)
+                            runnerViewModel.update(runner)
+                            runOnUiThread {
+                                rvAdapterDetailed.notifyItemChanged(i)
+                                scanSuccess(runner, false)
+                            }
+                            return
+                        }
+                    }
                     runOnUiThread {
-                        scanFail(null, "Tento člověk již byl přidán")
+                        scanFail(null, "Tento běžec nemá záznam")
+                    }
+                    return
+                }
+
+                if (runnersList.find { r -> r.runnerId == runner.runnerId } != null) {
+                    runOnUiThread {
+                        scanFail(null, "Tento běžec již byl přidán")
                     }
                     return
                 }
 
                 runOnUiThread {
-                    scanSuccess(runner)
+                    scanSuccess(runner, true)
                 }
             } catch (e: NFCException) {
                 runOnUiThread {
@@ -258,17 +312,18 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
         }
     }
 
-    private fun scanSuccess(runner: Runner) {
+    private fun scanSuccess(runner: Runner, startActivity: Boolean) {
         newRunnerDialogView.findViewById<LottieAnimationView>(R.id.animation_nfcScanning).visibility = View.GONE
 
         val animation = newRunnerDialogView.findViewById<LottieAnimationView>(R.id.animation_nfcSuccess)
         animation.visibility = View.VISIBLE
         animation.animate().setDuration(700).withEndAction {
-            val intent = Intent(this@MainActivity, AddActivity::class.java)
-                .putExtra("runner", runner)
+            if (startActivity) {
+                val intent = Intent(this@MainActivity, AddActivity::class.java)
+                    .putExtra("runner", runner)
 
-//            activityResultLauncher.launch(intent)
-            startActivity(intent)
+                startActivity(intent)
+            }
 
             newRunnerDialog.dismiss()
             animation.visibility = View.GONE
@@ -431,8 +486,8 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
 
     private fun reset() {
         deleteAllRunners()
+        getSharedPreferences("TZ", MODE_PRIVATE).edit().remove("referee").apply();
         Thread {
-            TZDatabase.getInstance(this@MainActivity).refereeDao().reset()
             TZDatabase.getInstance(this@MainActivity).checkpointDao().reset()
         }.start()
         activityResultLauncher.launch(Intent(this@MainActivity, CheckpointActivity::class.java))
@@ -495,5 +550,43 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
                 newRunnerDialog.dismiss()
             }
             .create()
+    }
+
+    private fun showStartFinishButtons() {
+        binding.fabStart.visibility = View.VISIBLE
+        binding.fabStart.alpha = 0f
+        binding.fabStart.translationY = binding.fabStart.height.toFloat()
+        binding.fabStart.animate()
+            .setDuration(200)
+            .translationY(0f)
+            .alpha(1f)
+            .start()
+        binding.fabFinish.visibility = View.VISIBLE
+        binding.fabFinish.alpha = 0f
+        binding.fabFinish.translationY = binding.fabFinish.height.toFloat()
+        binding.fabFinish.animate()
+            .setDuration(200)
+            .translationY(0f)
+            .alpha(1f)
+            .start()
+    }
+
+    private fun hideStartFinishButtons() {
+        binding.fabStart.alpha = 1f
+        binding.fabStart.translationY = 0f
+        binding.fabStart.animate()
+            .setDuration(200)
+            .translationY(binding.fabStart.height.toFloat())
+            .alpha(0f)
+            .withEndAction { binding.fabStart.visibility = View.GONE }
+            .start()
+        binding.fabFinish.alpha = 1f
+        binding.fabFinish.translationY = 0f
+        binding.fabFinish.animate()
+            .setDuration(200)
+            .translationY(binding.fabFinish.height.toFloat())
+            .alpha(0f)
+            .withEndAction { binding.fabFinish.visibility = View.GONE }
+            .start()
     }
 }

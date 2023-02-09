@@ -124,6 +124,30 @@
             android:contentDescription="@string/fab_content_description"
             android:text="@string/fab" />
 
+        <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+            android:id="@+id/fab_start"
+            android:layout_width="120dp"
+            android:layout_height="50dp"
+            android:layout_gravity="bottom|end"
+            android:layout_marginEnd="25dp"
+            android:layout_marginBottom="90dp"
+            android:backgroundTint="@color/fab_start_finish"
+            android:text="Start"
+            android:visibility="gone"
+            app:icon="@drawable/directions_run" />
+
+        <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+            android:id="@+id/fab_finish"
+            android:layout_width="120dp"
+            android:layout_height="50dp"
+            android:layout_gravity="bottom|end"
+            android:layout_marginEnd="25dp"
+            android:layout_marginBottom="150dp"
+            android:backgroundTint="@color/fab_start_finish"
+            android:text="Finiš"
+            android:visibility="gone"
+            app:icon="@drawable/flag_fill" />
+
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
     <com.google.android.material.navigation.NavigationView
@@ -131,7 +155,8 @@
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:layout_gravity="start"
-        app:menu="@menu/navigation_drawer"
-        app:headerLayout="@layout/header_navigation_drawer" />
+        android:visibility="visible"
+        app:headerLayout="@layout/header_navigation_drawer"
+        app:menu="@menu/navigation_drawer" />
 
 </androidx.drawerlayout.widget.DrawerLayout>
