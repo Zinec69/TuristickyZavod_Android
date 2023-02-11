@@ -9,9 +9,9 @@
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@mipmap/tz_logo_3"
+        android:icon="@mipmap/tz_logo_4"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/tz_logo_3_round"
+        android:roundIcon="@mipmap/tz_logo_4_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Turisticky_zavod"
         tools:targetApi="31">
