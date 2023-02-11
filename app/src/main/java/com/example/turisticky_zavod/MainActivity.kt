@@ -22,7 +22,6 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.get
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.airbnb.lottie.LottieAnimationView
 import com.example.turisticky_zavod.NFCHelper.NfcAvailability
 import com.example.turisticky_zavod.databinding.ActivityMainBinding
@@ -35,16 +34,10 @@ import java.io.IOException
 
 class MainActivity : AppCompatActivity(), ReaderCallback {
 
-    private val BASIC = 0
-    private val DETAILED = 1
-
-    private var listMode = 0
-
     private lateinit var binding: ActivityMainBinding
 
     private var runnersList = ArrayList<Runner>()
-    private lateinit var rvAdapterBasic: RvAdapterBasic
-    private lateinit var rvAdapterDetailed: RvAdapterDetailed
+    private lateinit var rvAdapter: RvAdapter
 
     private val runnerViewModel: RunnerViewModel by viewModels()
 
@@ -73,21 +66,30 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         super.onCreate(savedInstanceState)
 
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+        setSupportActionBar(binding.toolbarMain)
+
         nfcAdapter = getDefaultAdapter(this@MainActivity)
         if (nfcAdapter == null) {
             Toast.makeText(this@MainActivity, "Tato aplikace vyžaduje telefon s NFC", Toast.LENGTH_LONG).show()
         }
 
+        binding.recyclerView.layoutManager = LinearLayoutManager(this@MainActivity)
+        rvAdapter = RvAdapter(runnersList, object : RvAdapter.OptionsMenuLongClickListener {
+                        override fun onOptionsMenuLongClicked(position: Int): Boolean {
+                            handleRecyclerViewItemLongClicked(position)
+                            return true
+                        }
+                    })
+        binding.recyclerView.adapter = rvAdapter
+
         val sp = getSharedPreferences("TZ", MODE_PRIVATE)
         if (!sp.contains("list_mode")) {
-            sp.edit().putInt("list_mode", BASIC).apply()
+            sp.edit().putInt("list_mode", rvAdapter.BASIC).apply()
         } else {
-            listMode = sp.getInt("list_mode", BASIC)
+            rvAdapter.state = sp.getInt("list_mode", rvAdapter.BASIC)
         }
-
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-        setSupportActionBar(binding.toolbarMain)
 
         Thread {
             activeCheckpoint = TZDatabase.getInstance(this@MainActivity).checkpointDao().getActive()
@@ -103,21 +105,21 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
         }.start()
 
         binding.toolbarMain.setNavigationOnClickListener { binding.drawerLayout.open() }
-        binding.navigationView.setCheckedItem(if (listMode == BASIC) R.id.menuItem_viewBasic else R.id.menuItem_viewDetailed)
+        binding.navigationView.setCheckedItem(if (rvAdapter.state == rvAdapter.BASIC) R.id.menuItem_viewBasic else R.id.menuItem_viewDetailed)
         binding.navigationView.setNavigationItemSelectedListener { item ->
             item.isChecked = true
             binding.drawerLayout.close()
 
             when (item.itemId) {
                 R.id.menuItem_viewBasic -> {
-                    sp.edit().putInt("list_mode", BASIC).apply()
-                    listMode = BASIC
-                    binding.recyclerView.adapter = rvAdapterBasic
+                    sp.edit().putInt("list_mode", rvAdapter.BASIC).apply()
+                    rvAdapter.state = rvAdapter.BASIC
+                    rvAdapter.notifyItemRangeChanged(0, runnersList.size)
                 }
                 R.id.menuItem_viewDetailed -> {
-                    sp.edit().putInt("list_mode", DETAILED).apply()
-                    listMode = DETAILED
-                    binding.recyclerView.adapter = rvAdapterDetailed
+                    sp.edit().putInt("list_mode", rvAdapter.DETAILED).apply()
+                    rvAdapter.state = rvAdapter.DETAILED
+                    rvAdapter.notifyItemRangeChanged(0, runnersList.size)
                 }
                 R.id.menuItem_actionReset -> {
                     showResetDialog()
@@ -133,22 +135,6 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
 
             true
         }
-        binding.recyclerView.layoutManager = LinearLayoutManager(this@MainActivity)
-        rvAdapterBasic =
-            RvAdapterBasic(runnersList, object : RvAdapterBasic.OptionsMenuLongClickListener {
-                    override fun onOptionsMenuLongClicked(position: Int): Boolean {
-                        handleRecyclerViewItemLongClicked(position)
-                        return true
-                    }
-                })
-        rvAdapterDetailed =
-            RvAdapterDetailed(runnersList, object : RvAdapterDetailed.OptionsMenuLongClickListener {
-                override fun onOptionsMenuLongClicked(position: Int): Boolean {
-                    handleRecyclerViewItemLongClicked(position)
-                    return true
-                }
-            })
-        binding.recyclerView.adapter = getCurrentRvAdapter()
 
         runnerViewModel.runners.observe(this@MainActivity) { runners ->
             val diff = runners.size - runnersList.size
@@ -158,13 +144,13 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
                     for (runner in runners)
                         runnersList.add(0, runner)
 
-                    getCurrentRvAdapter().notifyItemRangeInserted(0, runnersList.size)
+                    rvAdapter.notifyItemRangeInserted(0, runnersList.size)
                     binding.textViewNoData.visibility = View.GONE
                 } else if (diff == 1) {
                     runnersList.add(0, runners.last())
 
-                    getCurrentRvAdapter().notifyItemInserted(0)
-                    getCurrentRvAdapter().notifyItemRangeChanged(0, runnersList.size)
+                    rvAdapter.notifyItemInserted(0)
+                    rvAdapter.notifyItemRangeChanged(0, runnersList.size)
 
                     if (runnersList.size == 1)
                         binding.textViewNoData.visibility = View.GONE
@@ -172,8 +158,8 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
                     for (runner in runners.takeLast(diff))
                         runnersList.add(0, runner)
 
-                    getCurrentRvAdapter().notifyItemRangeInserted(0, diff)
-                    getCurrentRvAdapter().notifyItemRangeChanged(0, runnersList.size)
+                    rvAdapter.notifyItemRangeInserted(0, diff)
+                    rvAdapter.notifyItemRangeChanged(0, runnersList.size)
 
                     if (runnersList.size > 1)
                         binding.textViewNoData.visibility = View.GONE
@@ -241,9 +227,11 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
                             nfcHelper.writeRunnerOnTag(ndef, runner)
                             runnerViewModel.update(runner)
                             runOnUiThread {
-                                getCurrentRvAdapter().notifyItemInserted(0)
-                                getCurrentRvAdapter().notifyItemRemoved(i)
-                                getCurrentRvAdapter().notifyItemRangeChanged(0, i)
+                                rvAdapter.apply {
+                                    notifyItemInserted(0)
+                                    notifyItemRemoved(i)
+                                    notifyItemRangeChanged(0, i)
+                                }
                                 scanSuccess(runner, false)
                             }
                             return
@@ -346,15 +334,7 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
 
     @SuppressLint("RestrictedApi", "DiscouragedPrivateApi")
     private fun handleRecyclerViewItemLongClicked(position: Int) {
-        val popupMenu = PopupMenu(
-            this@MainActivity,
-            binding.recyclerView[position].findViewById(
-                if (listMode == BASIC)
-                    R.id.textView_runnerName_listBasic
-                else
-                    R.id.textView_runnerName_listDetailed
-                )
-        )
+        val popupMenu = PopupMenu(this@MainActivity, binding.recyclerView[position].findViewById(R.id.textView_runnerName_rv))
         popupMenu.inflate(R.menu.menu_list_item)
         popupMenu.setOnMenuItemClickListener {
             when (it.itemId) {
@@ -395,8 +375,8 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
 
             runnersList.remove(runnersList[position])
 
-            getCurrentRvAdapter().notifyItemRemoved(position)
-            getCurrentRvAdapter().notifyItemRangeChanged(position, runnersList.size - position)
+            rvAdapter.notifyItemRemoved(position)
+            rvAdapter.notifyItemRangeChanged(position, runnersList.size - position)
 
             if (runnersList.size == 0)
                 binding.textViewNoData.visibility = View.VISIBLE
@@ -413,7 +393,7 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
             val size = runnersList.size
             runnersList.clear()
 
-            getCurrentRvAdapter().notifyItemRangeRemoved(0, size)
+            rvAdapter.notifyItemRangeRemoved(0, size)
             binding.textViewNoData.visibility = View.VISIBLE
         } catch (e: Exception) {
             Log.d("DB", e.stackTraceToString())
@@ -525,9 +505,5 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
             .alpha(0f)
             .withEndAction { binding.fabFinish.visibility = View.GONE }
             .start()
-    }
-
-    private fun getCurrentRvAdapter(): RecyclerView.Adapter<out RecyclerView.ViewHolder> {
-        return if (listMode == BASIC) rvAdapterBasic else rvAdapterDetailed
     }
 }
