@@ -90,6 +90,7 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
             binding.editTextRunnerId.setTextColor(getColor(R.color.edit_text_default))
             binding.editTextRunnerName.setTextColor(getColor(R.color.edit_text_default))
             binding.editTextRunnerTeam.setTextColor(getColor(R.color.edit_text_default))
+            showKeyboard(binding.editTextRunnerId)
         } else {
             binding.editTextRunnerId.setText(runner.runnerId.toString())
             binding.editTextRunnerName.setText(runner.name)
@@ -113,14 +114,26 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
         }
 
         binding.buttonSave.setOnClickListener {
-            if (binding.editTextRunnerId.text!!.isEmpty() ||
+            val id = binding.editTextRunnerId.text!!
+            if (id.isEmpty() ||
                 binding.editTextRunnerName.text!!.isEmpty() ||
                 binding.editTextRunnerTeam.text!!.isEmpty()) {
-                Toast.makeText(this@AddActivity, "Všechna pole jsou povinná", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@AddActivity, "Všechna pole jsou povinná", Toast.LENGTH_SHORT)
+                    .show()
             } else {
-                loseFocus(it)
-                stage = WRITING
-                scanForRunner()
+                Thread {
+                    if (runnerViewModel.getByID(id.toString().toInt()) != null) {
+                        runOnUiThread {
+                            Toast.makeText(this@AddActivity, "Běžec s tímto číslem již existuje", Toast.LENGTH_SHORT).show()
+                        }
+                    } else {
+                        runOnUiThread {
+                            loseFocus(it)
+                            stage = WRITING
+                            scanForRunner()
+                        }
+                    }
+                }.start()
             }
         }
         binding.coordinatorLayoutAdd.setOnClickListener { view: View -> loseFocus(view) }
@@ -401,7 +414,18 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
     private fun loseFocus(view: View) {
         for (child in binding.linearLayoutScrollViewContent.children)
             child.clearFocus()
+        hideKeyboard(view)
+    }
+
+    private fun hideKeyboard(view: View) {
         val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
         imm.hideSoftInputFromWindow(view.windowToken, 0)
+    }
+
+    private fun showKeyboard(view: View) {
+        if (view.requestFocus()) {
+            val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+            imm.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT)
+        }
     }
 }

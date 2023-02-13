@@ -23,7 +23,11 @@ class NFCHelper {
             if (tag.authenticateSectorWithKeyA(tag.blockToSector(i), MifareClassic.KEY_DEFAULT)) {
                 val block = readBlock(tag, i)
                 if (count < 0) {
-                    count = block.toInt()
+                    try {
+                        count = block.toInt()
+                    } catch (e: java.lang.NumberFormatException) {
+                        throw NFCException("Data jsou nekompletní nebo ve špatném formátu")
+                    }
                 } else {
                     allStr += block
                 }
@@ -32,7 +36,7 @@ class NFCHelper {
                 i++
                 if (--count < 0) break
             } else {
-                i += if (i == 1) 3 else blocksInSector
+                i += if (i == 1) blocksInSector - 1 else blocksInSector
             }
         }
 
@@ -40,6 +44,9 @@ class NFCHelper {
             throw NFCException("Poškozený čip, ne všechna data se dala přečíst")
 
         val allStrArray = allStr.split(";")
+
+        if (allStrArray.size < 8)
+            throw NFCException("Data jsou nekompletní nebo ve špatném formátu")
 
         Log.d("NFC DEBUG READ", "Whole string: $allStr")
         Log.d("NFC DEBUG READ", "String array: $allStrArray")
@@ -94,7 +101,7 @@ class NFCHelper {
                 i++
                 stage++
             } else {
-                i += if (i == 1) 3 else blocksInSector
+                i += if (i == 1) blocksInSector - 1 else blocksInSector
             }
         }
 
@@ -142,4 +149,3 @@ class NFCHelper {
 }
 
 class NFCException(message: String) : Exception(message)
-

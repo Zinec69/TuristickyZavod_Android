@@ -112,14 +112,18 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
 
             when (item.itemId) {
                 R.id.menuItem_viewBasic -> {
-                    sp.edit().putInt("list_mode", rvAdapter.BASIC).apply()
-                    rvAdapter.state = rvAdapter.BASIC
-                    rvAdapter.notifyItemRangeChanged(0, runnersList.size)
+                    if (rvAdapter.state != rvAdapter.BASIC) {
+                        sp.edit().putInt("list_mode", rvAdapter.BASIC).apply()
+                        rvAdapter.state = rvAdapter.BASIC
+                        rvAdapter.notifyItemRangeChanged(0, runnersList.size)
+                    }
                 }
                 R.id.menuItem_viewDetailed -> {
-                    sp.edit().putInt("list_mode", rvAdapter.DETAILED).apply()
-                    rvAdapter.state = rvAdapter.DETAILED
-                    rvAdapter.notifyItemRangeChanged(0, runnersList.size)
+                    if (rvAdapter.state != rvAdapter.DETAILED) {
+                        sp.edit().putInt("list_mode", rvAdapter.DETAILED).apply()
+                        rvAdapter.state = rvAdapter.DETAILED
+                        rvAdapter.notifyItemRangeChanged(0, runnersList.size)
+                    }
                 }
                 R.id.menuItem_actionReset -> {
                     showResetDialog()
@@ -150,7 +154,7 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
                     runnersList.add(0, runners.last())
 
                     rvAdapter.notifyItemInserted(0)
-                    rvAdapter.notifyItemRangeChanged(0, runnersList.size)
+                    binding.recyclerView.scrollToPosition(0)
 
                     if (runnersList.size == 1)
                         binding.textViewNoData.visibility = View.GONE
@@ -159,7 +163,7 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
                         runnersList.add(0, runner)
 
                     rvAdapter.notifyItemRangeInserted(0, diff)
-                    rvAdapter.notifyItemRangeChanged(0, runnersList.size)
+                    binding.recyclerView.scrollToPosition(0)
 
                     if (runnersList.size > 1)
                         binding.textViewNoData.visibility = View.GONE
@@ -222,16 +226,18 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
                             }
                             runner = runnersList[i]
                             runner.finishTime = System.currentTimeMillis()
+
                             runnersList.removeAt(i)
                             runnersList.add(0, runner)
+
                             nfcHelper.writeRunnerOnTag(ndef, runner)
+
                             runnerViewModel.update(runner)
+
                             runOnUiThread {
-                                rvAdapter.apply {
-                                    notifyItemInserted(0)
-                                    notifyItemRemoved(i)
-                                    notifyItemRangeChanged(0, i)
-                                }
+                                rvAdapter.notifyItemRemoved(i)
+                                rvAdapter.notifyItemInserted(0)
+                                binding.recyclerView.scrollToPosition(0)
                                 scanSuccess(runner, false)
                             }
                             return
@@ -376,7 +382,6 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
             runnersList.remove(runnersList[position])
 
             rvAdapter.notifyItemRemoved(position)
-            rvAdapter.notifyItemRangeChanged(position, runnersList.size - position)
 
             if (runnersList.size == 0)
                 binding.textViewNoData.visibility = View.VISIBLE
@@ -403,7 +408,7 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
 
     private fun reset() {
         deleteAllRunners()
-        getSharedPreferences("TZ", MODE_PRIVATE).edit().remove("referee").apply();
+        getSharedPreferences("TZ", MODE_PRIVATE).edit().remove("referee").apply()
         lifecycleScope.launch(Dispatchers.IO) {
             TZDatabase.getInstance(this@MainActivity).checkpointDao().reset()
         }
