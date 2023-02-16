@@ -61,8 +61,9 @@ class CheckpointActivity: AppCompatActivity() {
     }
 
     private fun save() {
-        if (binding.autoCompleteTextViewMenuCheckpoints.text.isEmpty()) {
-            Toast.makeText(this@CheckpointActivity, "Stanoviště je povinná položka", Toast.LENGTH_SHORT).show()
+        if (binding.autoCompleteTextViewMenuCheckpoints.text.isEmpty() ||
+                binding.editTextRefereeName.text!!.isEmpty()) {
+            Toast.makeText(this@CheckpointActivity, "Všechna pole jsou povinná", Toast.LENGTH_SHORT).show()
         } else {
             val intent = Intent()
             intent.putExtra("name", binding.editTextRefereeName.text)

@@ -47,17 +47,26 @@
     <string name="text_view_finish_time_placeholder" translatable="false">10:12:34</string>
     <string name="text_view_time_waited">Zdržení:</string>
     <string name="text_view_time_waited_placeholder" translatable="false">05:15</string>
-    <string name="text_view_penalty_minutes_list">Trestné minuty</string>
+    <string name="text_view_penalty_minutes_list">Trestné minuty:</string>
     <string name="text_view_penalty_minutes_placeholder" translatable="false">10:00</string>
 
     <!--  activity_checkpoint  -->
     <string name="toolbar_subtitle_checkpoint">Nastavení stanoviště</string>
+    <string name="text_view_initial_info">Úvodní informace</string>
     <string name="text_input_layout_hint_checkpoint">Stanoviště *</string>
     <string name="text_input_layout_hint_name">Vaše jméno</string>
     <string name="button_save_checkpoint">Uložit</string>
-    <string name="text_view_initial_info">Úvodní informace</string>
 
     <!--  header_navigation_drawer  -->
     <string name="text_view_navigation_drawer_header">Menu</string>
+
+    <!--  navigation_drawer  -->
+    <string name="menu_item_view_header_title">ZOBRAZENÍ</string>
+    <string name="menu_item_view_basic">Základní</string>
+    <string name="menu_item_view_detailed">Detailní</string>
+    <string name="menu_item_action_header_title">AKCE</string>
+    <string name="menu_item_action_export_runners">Exportovat seznam běžců</string>
+    <string name="menu_item_action_delete_runners">Vymazat seznam běžců</string>
+    <string name="menu_item_action_reset">Resetovat</string>
 
 </resources>

@@ -19,6 +19,7 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:grantUriPermissions="true"
             android:theme="@style/Theme.Turisticky_zavod">
 
             <intent-filter>
@@ -36,6 +37,10 @@
             <meta-data
                 android:name="android.nfc.action.TECH_DISCOVERED"
                 android:resource="@xml/nfc_list" />
+
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/filepaths" />
 
         </activity>
 

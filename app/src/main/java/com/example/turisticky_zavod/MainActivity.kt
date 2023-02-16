@@ -125,6 +125,9 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
                         rvAdapter.notifyItemRangeChanged(0, runnersList.size)
                     }
                 }
+                R.id.menuItem_actionExportData -> {
+                    runnerViewModel.exportToJson()
+                }
                 R.id.menuItem_actionReset -> {
                     showResetDialog()
                 }

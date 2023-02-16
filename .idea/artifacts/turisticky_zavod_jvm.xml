@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="turisticky_zavod-jvm">
+    <output-path>$PROJECT_DIR$/build/libs</output-path>
+    <root id="archive" name="turisticky_zavod-jvm.jar">
+      <element id="module-output" name="turisticky_zavod.jvmMain" />
+    </root>
+  </artifact>
+</component>

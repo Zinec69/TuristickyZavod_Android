@@ -33,6 +33,11 @@ import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
 
+class QueueInfo(
+    val runner: Runner,
+    val timeArrived: Long? = null
+)
+
 class AddActivity : AppCompatActivity(), ReaderCallback {
 
     private val READING = 0
@@ -48,11 +53,12 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
     private lateinit var scanDialogView: View
     private lateinit var scanDialog: AlertDialog
 
-    private var runnersQueue = ArrayList<Pair<Runner, Long?>>()
+    private var runnersQueue = ArrayList<QueueInfo>()
 
     private val runnerViewModel: RunnerViewModel by viewModels()
 
     private lateinit var currentCheckpoint: Checkpoint
+    private lateinit var checkpointInfo: CheckpointInfo
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -70,48 +76,80 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
         binding.toolbarAdd.setNavigationOnClickListener { handleBackButtonPressed() }
         binding.buttonCancel.setOnClickListener { handleBackButtonPressed() }
 
-        lifecycleScope.launch(Dispatchers.IO) {
+        val checkpointJob = lifecycleScope.launch(Dispatchers.IO) {
             currentCheckpoint = TZDatabase.getInstance(this@AddActivity).checkpointDao().getActive()!!
-        }.start()
+        }
+        checkpointJob.invokeOnCompletion {
+            runOnUiThread {
+                val runner =
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU)
+                        intent.getParcelableExtra("runner")
+                    else
+                        intent.getParcelableExtra("runner", Runner::class.java)
 
-        val runner =
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU)
-                intent.getParcelableExtra("runner")
-            else
-                intent.getParcelableExtra("runner", Runner::class.java)
-
-        if (runner == null) {
-            binding.editTextRunnerId.isEnabled = true
-            binding.editTextRunnerName.isEnabled = true
-            binding.editTextRunnerTeam.isEnabled = true
-            binding.cardViewDisqualified.visibility = View.GONE
-            binding.cardViewPenaltyMinutes.visibility = View.GONE
-            binding.buttonAddToQueue.visibility = View.GONE
-            binding.editTextRunnerId.setTextColor(getColor(R.color.edit_text_default))
-            binding.editTextRunnerName.setTextColor(getColor(R.color.edit_text_default))
-            binding.editTextRunnerTeam.setTextColor(getColor(R.color.edit_text_default))
-            showKeyboard(binding.editTextRunnerId)
-        } else {
-            binding.editTextRunnerId.setText(runner.runnerId.toString())
-            binding.editTextRunnerName.setText(runner.name)
-            binding.editTextRunnerTeam.setText(runner.team)
-            when (currentCheckpoint.id) {
-                4, 7, 9 -> {
-                    binding.cardViewDisqualified.isEnabled = false
-                    binding.switchDisqualified.isEnabled = false
-                    binding.textViewDisqualified.isEnabled = false
-                }
-                5 -> {
-                    binding.buttonAddToQueue.visibility = View.GONE
-                }
-                2, 3, 6 -> {
+                if (runner == null) {
+                    binding.editTextRunnerId.isEnabled = true
+                    binding.editTextRunnerName.isEnabled = true
+                    binding.editTextRunnerTeam.isEnabled = true
+                    binding.cardViewDisqualified.visibility = View.GONE
                     binding.cardViewPenaltyMinutes.visibility = View.GONE
+                    binding.buttonAddToQueue.visibility = View.GONE
+                    binding.editTextRunnerId.setTextColor(getColor(R.color.edit_text_default))
+                    binding.editTextRunnerName.setTextColor(getColor(R.color.edit_text_default))
+                    binding.editTextRunnerTeam.setTextColor(getColor(R.color.edit_text_default))
+                    showKeyboard(binding.editTextRunnerId)
+                } else {
+                    binding.editTextRunnerId.setText(runner.runnerId.toString())
+                    binding.editTextRunnerName.setText(runner.name)
+                    binding.editTextRunnerTeam.setText(runner.team)
+                    when (currentCheckpoint.id) {
+                        4, 7, 9 -> {
+                            binding.cardViewDisqualified.isEnabled = false
+                            binding.switchDisqualified.isEnabled = false
+                            binding.textViewDisqualified.isEnabled = false
+                        }
+                        5 -> {
+                            binding.buttonAddToQueue.visibility = View.GONE
+                        }
+                        2, 3, 6 -> {
+                            binding.cardViewPenaltyMinutes.visibility = View.GONE
+                        }
+                    }
+                    binding.switchDisqualified.isChecked = runner.disqualified
+
+                    checkpointInfo.timeArrived = System.currentTimeMillis()
+                    runner.checkpointInfo.add(checkpointInfo)
+
+                    runnersQueue.add(QueueInfo(runner))
+                }
+
+                val colorsLayout = arrayOf(
+                    ColorDrawable(getColor(R.color.background_layout_normal)),
+                    ColorDrawable(getColor(R.color.background_layout_disqualified))
+                )
+                val colorsToolbar = arrayOf(
+                    ColorDrawable(getColor(R.color.background_layout_normal)),
+                    ColorDrawable(getColor(R.color.background_layout_disqualified))
+                )
+                if (runner?.disqualified == true) {
+                    binding.root.background =
+                        ColorDrawable(getColor(R.color.background_layout_disqualified))
+                    binding.toolbarAdd.background =
+                        ColorDrawable(getColor(R.color.background_layout_disqualified))
+                    colorsLayout.reverse()
+                    colorsToolbar.reverse()
+                }
+                val transitionLayout = TransitionDrawable(colorsLayout)
+                val transitionToolbar = TransitionDrawable(colorsToolbar)
+                binding.switchDisqualified.setOnCheckedChangeListener { _, _ ->
+                    binding.root.background = transitionLayout
+                    binding.toolbarAdd.background = transitionToolbar
+                    transitionLayout.reverseTransition(500)
+                    transitionToolbar.reverseTransition(500)
                 }
             }
-            binding.switchDisqualified.isChecked = runner.disqualified
-
-            runnersQueue.add(Pair(runner, null))
         }
+        checkpointJob.start()
 
         binding.buttonSave.setOnClickListener {
             val id = binding.editTextRunnerId.text!!
@@ -164,23 +202,6 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
             binding.switchDisqualified.isChecked = !binding.switchDisqualified.isChecked
         }
 
-        val colorsLayout = arrayOf(ColorDrawable(getColor(R.color.background_layout_normal)), ColorDrawable(getColor(R.color.background_layout_disqualified)))
-        val colorsToolbar = arrayOf(ColorDrawable(getColor(R.color.background_layout_normal)), ColorDrawable(getColor(R.color.background_layout_disqualified)))
-        if (runner?.disqualified == true) {
-            binding.root.background = ColorDrawable(getColor(R.color.background_layout_disqualified))
-            binding.toolbarAdd.background = ColorDrawable(getColor(R.color.background_layout_disqualified))
-            colorsLayout.reverse()
-            colorsToolbar.reverse()
-        }
-        val transitionLayout = TransitionDrawable(colorsLayout)
-        val transitionToolbar = TransitionDrawable(colorsToolbar)
-        binding.switchDisqualified.setOnCheckedChangeListener { _, _ ->
-            binding.root.background = transitionLayout
-            binding.toolbarAdd.background = transitionToolbar
-            transitionLayout.reverseTransition(500)
-            transitionToolbar.reverseTransition(500)
-        }
-
         binding.buttonAddToQueue.setOnClickListener {
             stage = READING
             scanForRunner()
@@ -188,6 +209,11 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
 
         scanDialogView = layoutInflater.inflate(R.layout.dialog_add, null)
         initScanDialog()
+
+        if (currentCheckpoint.id != 1) {
+            val refereeName = getSharedPreferences("TZ", MODE_PRIVATE).getString("referee", "")!!
+            checkpointInfo = CheckpointInfo(currentCheckpoint.id!!, refereeName, System.currentTimeMillis())
+        }
     }
 
     private fun getUpdatedRunner(): Runner {
@@ -197,17 +223,23 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
         val penaltySeconds = binding.numberPickerSecond.value
         val penalty = penaltyMinutes * 60 + penaltySeconds * 5
 
-        val runner = runnersQueue[0].first
+        val runner = runnersQueue[0].runner
         runner.disqualified = disqualified
         runner.penaltySeconds += penalty
-        runnersQueue[0].second?.let { runner.timeWaited += it.toInt() }
 
         return runner
     }
 
     private fun handleNewRunner() {
-        val runner = runnersQueue[0].first
-        runnersQueue[0] = Pair(runner, System.currentTimeMillis() - runnersQueue[0].second!!)
+        val delaySeconds = (System.currentTimeMillis() - runnersQueue[0].timeArrived!!) / 1000
+        runnersQueue[0].runner.timeWaitedSeconds += delaySeconds.toInt()
+
+        if (currentCheckpoint.id != 1) {
+            checkpointInfo.timeArrived = runnersQueue[0].timeArrived!!
+            runnersQueue[0].runner.checkpointInfo.add(checkpointInfo)
+        }
+
+        val runner = runnersQueue[0].runner
 
         binding.editTextRunnerId.animate().alpha(0f).setDuration(200).withEndAction {
             binding.editTextRunnerId.setText(runner.runnerId.toString())
@@ -233,8 +265,7 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
         }
         binding.switchDisqualified.isChecked = runner.disqualified
         binding.linearLayoutRunnerDelay.visibility = View.VISIBLE
-        val delayMs = runnersQueue[0].second!!
-        binding.textViewRunnerDelayVar.text = SimpleDateFormat("mm:ss", Locale("cze")).format(delayMs)
+        binding.textViewRunnerDelayVar.text = SimpleDateFormat("mm:ss", Locale("cze")).format(delaySeconds * 1000)
     }
 
     override fun onTagDiscovered(tag: Tag?) {
@@ -260,7 +291,7 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
 
                 var runner = nfcHelper.readRunner(ndef)
 
-                if (stage == WRITING && runner.runnerId != runnersQueue[0].first.runnerId) {
+                if (stage == WRITING && runner.runnerId != runnersQueue[0].runner.runnerId) {
                     runOnUiThread {
                         scanFail(null, "Čip se neshoduje s právě zpracovávaným běžcem")
                     }
@@ -316,7 +347,7 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
         animation.visibility = View.VISIBLE
         animation.animate().setDuration(700).withEndAction {
             if (stage == READING) {
-                runnersQueue.add(Pair(runner, System.currentTimeMillis()))
+                runnersQueue.add(QueueInfo(runner, System.currentTimeMillis()))
                 Toast.makeText(this@AddActivity, "Běžec č. ${runner.runnerId} přidán do fronty", Toast.LENGTH_SHORT).show()
             } else {
                 Toast.makeText(this@AddActivity, "Běžec č. ${runner.runnerId} úspěšně uložen", Toast.LENGTH_SHORT).show()

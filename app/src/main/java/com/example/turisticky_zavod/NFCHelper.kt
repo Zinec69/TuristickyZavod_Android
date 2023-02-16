@@ -52,6 +52,13 @@ class NFCHelper {
         Log.d("NFC DEBUG READ", "String array: $allStrArray")
         Log.d("NFC DEBUG READ", "Tag read in: ${System.currentTimeMillis() - start}ms")
 
+        val checkpointInfoArray = ArrayList<CheckpointInfo>()
+        if (allStrArray.size > 8) {
+            for (j in 8 until allStrArray.size step 3) {
+                checkpointInfoArray.add(CheckpointInfo(allStrArray[j].toInt(), allStrArray[j + 1], allStrArray[j + 2].toLong()))
+            }
+        }
+
         return Runner(
             allStrArray[0].toInt(),
             allStrArray[1],
@@ -60,7 +67,8 @@ class NFCHelper {
             if (allStrArray[4] == "0") null else allStrArray[4].toLong(),
             allStrArray[5].toInt(),
             allStrArray[6].toInt(),
-            allStrArray[7] == "1"
+            allStrArray[7] == "1",
+            checkpointInfoArray
         )
     }
 
@@ -74,8 +82,11 @@ class NFCHelper {
 
     fun writeRunnerOnTag(tag: MifareClassic, runner: Runner) {
         val start = System.currentTimeMillis()
-        val allStr = "${runner.runnerId};${runner.name};${runner.team};${runner.startTime};${runner.finishTime ?: 0};" +
-                "${runner.timeWaited};${runner.penaltySeconds};${if (runner.disqualified) 1 else 0}"
+        var allStr = "${runner.runnerId};${runner.name};${runner.team};${runner.startTime};${runner.finishTime ?: 0};" +
+                "${runner.timeWaitedSeconds};${runner.penaltySeconds};${if (runner.disqualified) 1 else 0}"
+        for (c in runner.checkpointInfo) {
+            allStr += ";${c.checkpointId};${c.refereeName};${c.timeArrived}"
+        }
         val allByteArrays = stringToByteArraySplits(allStr)
         val arraySizeBytes = allByteArrays.size.toString().toByteArray(Charset.forName("ISO-8859-2"))
         val arraySizeBytesFit = ByteArray(16) { i -> if (i < arraySizeBytes.size) arraySizeBytes[i] else 0 }
@@ -111,7 +122,7 @@ class NFCHelper {
         Log.d("NFC DEBUG WRITE", "Tag written to in: ${System.currentTimeMillis() - start}ms")
     }
 
-    private fun stringToByteArraySplits(str: String): List<ByteArray> {
+    fun stringToByteArraySplits(str: String): List<ByteArray> {
         val bytes = str.toByteArray(Charset.forName("ISO-8859-2"))
         val byteList = bytes.toList()
         val splitList = mutableListOf<ByteArray>()

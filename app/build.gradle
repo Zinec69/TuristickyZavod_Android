@@ -2,6 +2,7 @@ plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
     id 'kotlin-kapt'
+    id 'kotlin-parcelize'
 }
 
 android {
@@ -39,7 +40,7 @@ android {
 dependencies {
     // defaults
     implementation 'androidx.core:core-ktx:1.9.0'
-    implementation 'androidx.appcompat:appcompat:1.6.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation "com.google.android.material:material:$rootProject.material_version"
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'androidx.navigation:navigation-fragment-ktx:2.5.3'
@@ -62,4 +63,10 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$rootProject.lifecycle_version"
     implementation "androidx.lifecycle:lifecycle-livedata-ktx:$rootProject.lifecycle_version"
     implementation "androidx.lifecycle:lifecycle-common-java8:$rootProject.lifecycle_version"
+
+    // Moshi
+    implementation "com.squareup.moshi:moshi:$rootProject.moshi_version"
+    kapt "com.squareup.moshi:moshi-kotlin-codegen:$rootProject.moshi_version"
+    implementation "com.squareup.retrofit2:converter-moshi:2.9.0"
+    implementation "com.squareup.moshi:moshi-kotlin:1.9.1"
 }

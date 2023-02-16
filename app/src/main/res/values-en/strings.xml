@@ -35,4 +35,11 @@
     <string name="button_save_checkpoint">Save</string>
     <string name="text_view_initial_info">Initial information</string>
     <string name="text_view_navigation_drawer_header">Menu</string>
+    <string name="menu_item_view_header_title">VIEW</string>
+    <string name="menu_item_view_basic">Basic</string>
+    <string name="menu_item_view_detailed">Detailed</string>
+    <string name="menu_item_action_header_title">ACTIONS</string>
+    <string name="menu_item_action_export_runners">Export the list of runners</string>
+    <string name="menu_item_action_delete_runners">Delete the list of runners</string>
+    <string name="menu_item_action_reset">Reset</string>
 </resources>

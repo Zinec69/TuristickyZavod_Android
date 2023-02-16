@@ -1,13 +1,17 @@
 package com.example.turisticky_zavod
 
 import android.app.Application
-import android.os.Parcel
 import android.os.Parcelable
+import android.util.Log
 import androidx.lifecycle.*
 import androidx.room.*
+import com.squareup.moshi.*
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.parcelize.Parcelize
 
+@Parcelize
 @Entity(indices = [Index(value = ["runnerId"], unique = true)])
 data class Runner(
     val runnerId: Int,
@@ -15,49 +19,12 @@ data class Runner(
     val team: String,
     val startTime: Long,
     var finishTime: Long? = null,
-    var timeWaited: Int = 0,
+    var timeWaitedSeconds: Int = 0,
     var penaltySeconds: Int = 0,
     var disqualified: Boolean = false,
+    var checkpointInfo: ArrayList<CheckpointInfo> = ArrayList(),
     @PrimaryKey(autoGenerate = true) val id: Int? = null
-) : Parcelable {
-    constructor(parcel: Parcel) : this(
-        parcel.readInt(),
-        parcel.readString()!!,
-        parcel.readString()!!,
-        parcel.readLong(),
-        parcel.readValue(Long::class.java.classLoader) as Long?,
-        parcel.readInt(),
-        parcel.readInt(),
-        parcel.readByte() != 0.toByte(),
-        parcel.readValue(Int::class.java.classLoader) as? Int
-    )
-
-    override fun writeToParcel(parcel: Parcel, flags: Int) {
-        parcel.writeInt(runnerId)
-        parcel.writeString(name)
-        parcel.writeString(team)
-        parcel.writeLong(startTime)
-        parcel.writeValue(finishTime)
-        parcel.writeInt(timeWaited)
-        parcel.writeInt(penaltySeconds)
-        parcel.writeByte(if (disqualified) 1 else 0)
-        parcel.writeValue(id)
-    }
-
-    override fun describeContents(): Int {
-        return 0
-    }
-
-    companion object CREATOR : Parcelable.Creator<Runner> {
-        override fun createFromParcel(parcel: Parcel): Runner {
-            return Runner(parcel)
-        }
-
-        override fun newArray(size: Int): Array<Runner?> {
-            return arrayOfNulls(size)
-        }
-    }
-}
+) : Parcelable
 
 @Dao
 interface RunnerDao {
@@ -149,5 +116,20 @@ class RunnerViewModel(application: Application) : AndroidViewModel(application) 
 
     fun deleteAll() = viewModelScope.launch(Dispatchers.IO) {
         repository.deleteAll()
+    }
+
+    fun exportToJson() = viewModelScope.launch(Dispatchers.IO) {
+//        val file = File("tmp/").createNewFile()
+        val start = System.currentTimeMillis()
+        val moshi = Moshi.Builder()
+            .add(KotlinJsonAdapterFactory())
+            .add(CheckpointInfoArrayListMoshiAdapter())
+            .build()
+        val type = Types.newParameterizedType(List::class.java, Runner::class.java)
+        val jsonAdapter: JsonAdapter<List<Runner>> = moshi.adapter(type)
+        val json = jsonAdapter.toJson(runners.value)
+//        Toast.makeText(getApplication(), file.toString(), Toast.LENGTH_LONG).show()
+        Log.d("JSON EXPORT", json)
+        Log.d("JSON EXPORT", "Done in ${System.currentTimeMillis() - start} ms")
     }
 }
