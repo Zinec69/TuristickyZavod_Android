@@ -8,9 +8,9 @@ import kotlinx.parcelize.Parcelize
 @Parcelize
 @JsonClass(generateAdapter = true)
 data class CheckpointInfo(
-    @Json(name = "checkpointID") val checkpointId: Int,
+    @Json(name = "checkpointId") val checkpointId: Int,
     @Json(name = "refereeName") val refereeName: String,
-    @Json(name = "timestamp") var timeArrived: Long
+    @Json(name = "timeArrived") var timeArrived: Long
 ) : Parcelable
 
 class CheckpointInfoJsonConverter {

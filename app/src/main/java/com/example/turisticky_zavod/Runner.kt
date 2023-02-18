@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
 
 @Parcelize
+@JsonClass(generateAdapter = true)
 @Entity(indices = [Index(value = ["runnerId"], unique = true)])
 data class Runner(
     val runnerId: Int,
@@ -23,7 +24,9 @@ data class Runner(
     var penaltySeconds: Int = 0,
     var disqualified: Boolean = false,
     var checkpointInfo: ArrayList<CheckpointInfo> = ArrayList(),
-    @PrimaryKey(autoGenerate = true) val id: Int? = null
+    @PrimaryKey(autoGenerate = true)
+    @Json(ignore = true)
+    val id: Int? = null
 ) : Parcelable
 
 @Dao
@@ -118,18 +121,21 @@ class RunnerViewModel(application: Application) : AndroidViewModel(application) 
         repository.deleteAll()
     }
 
-    fun exportToJson() = viewModelScope.launch(Dispatchers.IO) {
-//        val file = File("tmp/").createNewFile()
+    fun exportToJson(): String {
         val start = System.currentTimeMillis()
+
         val moshi = Moshi.Builder()
             .add(KotlinJsonAdapterFactory())
             .add(CheckpointInfoArrayListMoshiAdapter())
             .build()
         val type = Types.newParameterizedType(List::class.java, Runner::class.java)
-        val jsonAdapter: JsonAdapter<List<Runner>> = moshi.adapter(type)
+        val jsonAdapter: JsonAdapter<List<Runner>> = moshi.adapter<List<Runner>?>(type).indent("    ")
+
         val json = jsonAdapter.toJson(runners.value)
-//        Toast.makeText(getApplication(), file.toString(), Toast.LENGTH_LONG).show()
+
         Log.d("JSON EXPORT", json)
         Log.d("JSON EXPORT", "Done in ${System.currentTimeMillis() - start} ms")
+
+        return json
     }
 }

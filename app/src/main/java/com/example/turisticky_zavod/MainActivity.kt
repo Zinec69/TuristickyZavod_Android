@@ -10,6 +10,8 @@ import android.nfc.Tag
 import android.nfc.TagLostException
 import android.nfc.tech.MifareClassic
 import android.os.Bundle
+import android.os.Environment
+import android.service.chooser.ChooserTarget
 import android.util.Log
 import android.view.View
 import android.widget.*
@@ -18,6 +20,8 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.core.view.WindowCompat
 import androidx.core.view.get
 import androidx.lifecycle.lifecycleScope
@@ -29,7 +33,9 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.io.File
 import java.io.IOException
+import java.nio.charset.Charset
 
 
 class MainActivity : AppCompatActivity(), ReaderCallback {
@@ -126,7 +132,7 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
                     }
                 }
                 R.id.menuItem_actionExportData -> {
-                    runnerViewModel.exportToJson()
+                    exportRunnersList()
                 }
                 R.id.menuItem_actionReset -> {
                     showResetDialog()
@@ -348,9 +354,6 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
         popupMenu.setOnMenuItemClickListener {
             when (it.itemId) {
                 R.id.menuItem_listItemDelete -> { showDeleteRunnerDialog(position) }
-                R.id.menuItem_listItemEdit -> {
-                    Toast.makeText(this@MainActivity , "Position: $position\nSize: ${runnersList.size}" , Toast.LENGTH_SHORT).show()
-                }
             }
             true
         }
@@ -407,6 +410,40 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
             Log.d("DB", e.stackTraceToString())
             Toast.makeText(this@MainActivity, "Chyba při mazání záznamů", Toast.LENGTH_LONG).show()
         }
+    }
+
+    private fun exportRunnersList() {
+        Thread {
+            val json = runnerViewModel.exportToJson()
+
+            val fileName = "${activeCheckpoint!!.name.replace(' ', '-')}_${System.currentTimeMillis()}"
+
+            try {
+                val file = File.createTempFile(fileName, ".json")
+                if (file.exists()) {
+                    file.writeText(json, Charset.forName("ISO-8859-2"))
+                    val uri = FileProvider.getUriForFile(
+                        this@MainActivity,
+                        BuildConfig.APPLICATION_ID + ".provider",
+                        file
+                    )
+                    val intent = Intent.createChooser(Intent().apply {
+                        action = Intent.ACTION_SEND
+                        type = "text/json"
+                        putExtra(Intent.EXTRA_STREAM, uri)
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                                Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                                Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                    }, null)
+                    startActivity(intent)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                runOnUiThread {
+                    Toast.makeText(this@MainActivity, "Chyba při exportu dat", Toast.LENGTH_LONG).show()
+                }
+            }
+        }.start()
     }
 
     private fun reset() {

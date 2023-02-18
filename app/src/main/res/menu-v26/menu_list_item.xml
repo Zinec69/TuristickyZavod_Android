@@ -2,11 +2,11 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <item android:id="@+id/menuItem_listItemEdit"
-        android:icon="@drawable/edit_fill_24"
-        android:title="@string/menu_item_edit_item"
-        app:showAsAction="ifRoom"
-        android:iconTint="?android:attr/colorForeground"/>
+<!--    <item android:id="@+id/menuItem_listItemEdit"-->
+<!--        android:icon="@drawable/edit_fill_24"-->
+<!--        android:title="@string/menu_item_edit_item"-->
+<!--        app:showAsAction="ifRoom"-->
+<!--        android:iconTint="?android:attr/colorForeground"/>-->
 
     <item android:id="@+id/menuItem_listItemDelete"
         android:icon="@drawable/delete_fill_2_24"
