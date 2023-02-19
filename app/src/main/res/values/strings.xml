@@ -25,6 +25,7 @@
     <string name="button_cancel">Zrušit</string>
     <string name="text_view_nfc_off">NFC je vypnuté </string>
     <string name="button_turn_on_nfc">Zapnout NFC</string>
+    <string name="text_view_attach_tag">Přiložte čip</string>
 
     <!--  activity_add  -->
     <string name="edit_text_runner_id_hint">Číslo běžce</string>
@@ -43,7 +44,7 @@
     <!--  list_item_detailed  -->
     <string name="text_view_start_time">Start:</string>
     <string name="text_view_start_time_placeholder" translatable="false">09:35:51</string>
-    <string name="text_view_finish_time">Finiš:</string>
+    <string name="text_view_finish_time">Cíl:</string>
     <string name="text_view_finish_time_placeholder" translatable="false">10:12:34</string>
     <string name="text_view_time_waited">Zdržení:</string>
     <string name="text_view_time_waited_placeholder" translatable="false">05:15</string>

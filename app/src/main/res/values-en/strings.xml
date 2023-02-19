@@ -17,6 +17,7 @@
     <string name="button_cancel">Cancel</string>
     <string name="text_view_nfc_off">NFC is off</string>
     <string name="button_turn_on_nfc">Turn NFC on</string>
+    <string name="text_view_attach_tag">Attach tag</string>
     <string name="edit_text_runner_id_hint">Runner number</string>
     <string name="edit_text_runner_name_hint">Name</string>
     <string name="edit_text_runner_team_hint">Team</string>

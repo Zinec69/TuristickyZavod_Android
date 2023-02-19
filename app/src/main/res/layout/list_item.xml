@@ -86,17 +86,15 @@
 
                     <LinearLayout
                         android:id="@+id/linearLayout_timeContent"
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="10dp"
-                        android:orientation="horizontal">
+                        android:orientation="vertical">
 
                         <LinearLayout
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_gravity="start"
-                            android:layout_marginEnd="20dp"
-                            android:layout_marginBottom="1dp"
+                            android:layout_marginBottom="3dp"
                             android:orientation="horizontal">
 
                             <LinearLayout
@@ -124,6 +122,13 @@
 
                             </LinearLayout>
 
+                            <com.google.android.material.divider.MaterialDivider
+                                android:id="@+id/divider_startFinishSpace"
+                                android:layout_width="0dp"
+                                android:layout_weight="1"
+                                android:layout_height="match_parent"
+                                android:visibility="invisible"/>
+
                             <LinearLayout
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
@@ -144,6 +149,7 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginBottom="1dp"
+                                    android:layout_gravity="center"
                                     android:text="@string/text_view_finish_time_placeholder"
                                     android:textColor="@color/runnerInfo"
                                     android:textSize="12sp" />
@@ -151,6 +157,11 @@
                             </LinearLayout>
 
                         </LinearLayout>
+
+                        <com.google.android.material.divider.MaterialDivider
+                            android:layout_width="20dp"
+                            android:layout_height="0dp"
+                            android:visibility="invisible"/>
 
                         <LinearLayout
                             android:layout_width="wrap_content"
@@ -220,7 +231,7 @@
                 android:layout_height="match_parent"
                 android:layout_marginEnd="20dp"
                 android:contentDescription="@string/image_disqualified_content_description"
-                android:visibility="gone"
+                android:visibility="visible"
                 app:srcCompat="@drawable/disabled_fill"
                 app:tint="#F45E56" />
         </LinearLayout>

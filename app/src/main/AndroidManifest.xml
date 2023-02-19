@@ -5,6 +5,11 @@
     <uses-permission android:name="android.permission.NFC" />
     <uses-feature android:name="android.hardware.nfc" android:required="true" />
 
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"/>
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -13,6 +18,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/tz_logo_4_round"
         android:supportsRtl="true"
+        android:requestLegacyExternalStorage="true"
         android:theme="@style/Theme.Turisticky_zavod"
         tools:targetApi="31">
 
@@ -74,6 +80,19 @@
             android:exported="true"
             android:theme="@style/Theme.Turisticky_zavod"
             android:windowSoftInputMode="adjustPan">
+
+        </activity>
+
+        <activity
+            android:name=".FileShareActivity"
+            android:label="Uložit soubor"
+            android:exported="true">
+
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/*" />
+            </intent-filter>
 
         </activity>
 

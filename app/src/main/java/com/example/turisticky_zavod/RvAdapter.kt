@@ -49,9 +49,11 @@ class RvAdapter(
                 if (this.disqualified) {
                     binding.imageViewDisqualifiedListDetailed.visibility = View.VISIBLE
                     binding.linearLayoutTimeContent.orientation = LinearLayout.VERTICAL
+                    binding.dividerStartFinishSpace.visibility = View.INVISIBLE
                 } else {
                     binding.imageViewDisqualifiedListDetailed.visibility = View.GONE
                     binding.linearLayoutTimeContent.orientation = LinearLayout.HORIZONTAL
+                    binding.dividerStartFinishSpace.visibility = View.GONE
                 }
 
                 binding.cardViewRv.setOnLongClickListener {

@@ -10,8 +10,6 @@ import android.nfc.Tag
 import android.nfc.TagLostException
 import android.nfc.tech.MifareClassic
 import android.os.Bundle
-import android.os.Environment
-import android.service.chooser.ChooserTarget
 import android.util.Log
 import android.view.View
 import android.widget.*
@@ -20,7 +18,6 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.core.view.WindowCompat
 import androidx.core.view.get
@@ -334,13 +331,16 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
                     startActivity(Intent("android.settings.NFC_SETTINGS"))
                     newRunnerDialogView.findViewById<ConstraintLayout>(R.id.constraintLayout_nfcOff).visibility = View.GONE
                     newRunnerDialogView.findViewById<LottieAnimationView>(R.id.animation_nfcScanning).visibility = View.VISIBLE
+                    newRunnerDialogView.findViewById<TextView>(R.id.textView_attachTag).text = getString(R.string.text_view_attach_tag)
                     startScanningNFC()
                 }
             newRunnerDialogView.findViewById<LottieAnimationView>(R.id.animation_nfcScanning).visibility = View.GONE
             newRunnerDialogView.findViewById<ConstraintLayout>(R.id.constraintLayout_nfcOff).visibility = View.VISIBLE
+            newRunnerDialogView.findViewById<TextView>(R.id.textView_attachTag).text = getString(R.string.text_view_nfc_off)
         } else {
             newRunnerDialogView.findViewById<LottieAnimationView>(R.id.animation_nfcScanning).visibility = View.VISIBLE
             newRunnerDialogView.findViewById<ConstraintLayout>(R.id.constraintLayout_nfcOff).visibility = View.GONE
+            newRunnerDialogView.findViewById<TextView>(R.id.textView_attachTag).text = getString(R.string.text_view_attach_tag)
             startScanningNFC()
         }
 
@@ -416,15 +416,17 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
         Thread {
             val json = runnerViewModel.exportToJson()
 
-            val fileName = "${activeCheckpoint!!.name.replace(' ', '-')}_${System.currentTimeMillis()}"
+            val fileName = "${activeCheckpoint!!.name.replace(' ', '-')}_${System.currentTimeMillis()}.json"
 
             try {
-                val file = File.createTempFile(fileName, ".json")
+                val file = File(cacheDir.path, fileName)
+                file.createNewFile()
+
                 if (file.exists()) {
                     file.writeText(json, Charset.forName("ISO-8859-2"))
                     val uri = FileProvider.getUriForFile(
                         this@MainActivity,
-                        BuildConfig.APPLICATION_ID + ".provider",
+                        "${BuildConfig.APPLICATION_ID}.provider",
                         file
                     )
                     val intent = Intent.createChooser(Intent().apply {
@@ -434,8 +436,14 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
                         flags = Intent.FLAG_ACTIVITY_NEW_TASK or
                                 Intent.FLAG_GRANT_READ_URI_PERMISSION or
                                 Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                        putExtra("filename", fileName)
                     }, null)
+
                     startActivity(intent)
+                } else {
+                    runOnUiThread {
+                        Toast.makeText(this@MainActivity, "Nepodařilo se vytvořit soubor", Toast.LENGTH_LONG).show()
+                    }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -447,6 +455,7 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
     }
 
     private fun reset() {
+        cacheDir.deleteRecursively()
         deleteAllRunners()
         getSharedPreferences("TZ", MODE_PRIVATE).edit().remove("referee").apply()
         lifecycleScope.launch(Dispatchers.IO) {
