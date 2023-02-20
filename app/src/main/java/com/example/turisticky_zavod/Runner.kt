@@ -20,8 +20,6 @@ data class Runner(
     val team: String,
     val startTime: Long,
     var finishTime: Long? = null,
-    var timeWaitedSeconds: Int = 0,
-    var penaltySeconds: Int = 0,
     var disqualified: Boolean = false,
     var checkpointInfo: ArrayList<CheckpointInfo> = ArrayList(),
     @PrimaryKey(autoGenerate = true)

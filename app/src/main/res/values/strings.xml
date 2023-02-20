@@ -21,8 +21,6 @@
     <string name="menu_item_delete_item">Smazat</string>
 
     <!--  dialog_add  -->
-    <string name="button_save">Uložit</string>
-    <string name="button_cancel">Zrušit</string>
     <string name="text_view_nfc_off">NFC je vypnuté </string>
     <string name="button_turn_on_nfc">Zapnout NFC</string>
     <string name="text_view_attach_tag">Přiložte čip</string>
@@ -34,6 +32,8 @@
     <string name="text_view_penalty_minutes">Trestné minuty</string>
     <string name="text_view_penalty_minutes_colon" translatable="false">:</string>
     <string name="text_view_runner_delay">Zdržení:</string>
+    <string name="button_save">Uložit</string>
+    <string name="button_cancel">Zrušit</string>
 
     <!--  list_items  -->
     <string name="text_view_runner_id_placeholder" translatable="false">1</string>
@@ -54,8 +54,8 @@
     <!--  activity_checkpoint  -->
     <string name="toolbar_subtitle_checkpoint">Nastavení stanoviště</string>
     <string name="text_view_initial_info">Úvodní informace</string>
+    <string name="text_input_layout_hint_name">Vaše jméno *</string>
     <string name="text_input_layout_hint_checkpoint">Stanoviště *</string>
-    <string name="text_input_layout_hint_name">Vaše jméno</string>
     <string name="button_save_checkpoint">Uložit</string>
 
     <!--  header_navigation_drawer  -->

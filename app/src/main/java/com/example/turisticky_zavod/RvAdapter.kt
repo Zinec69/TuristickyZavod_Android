@@ -36,12 +36,19 @@ class RvAdapter(
                 binding.textViewRunnerNameRv.text = this.name
                 binding.textViewRunnerTeamRv.text = this.team
 
+                var timeWaitedSeconds = 0
+                var penaltySeconds = 0
+                for (c in this.checkpointInfo) {
+                    timeWaitedSeconds += c.timeWaitedSeconds
+                    penaltySeconds += c.penaltySeconds
+                }
+
                 if (state == DETAILED) {
                     binding.linearLayoutDetailedListContent.visibility = View.VISIBLE
                     binding.textViewStartTimeVar.text = SimpleDateFormat("HH:mm:ss", Locale("cze")).format(this.startTime)
                     binding.textViewFinishTimeVar.text = if (this.finishTime != null) SimpleDateFormat("HH:mm:ss", Locale("cze")).format(this.finishTime) else " - "
-                    binding.textViewTimeWaitedVar.text = SimpleDateFormat("mm:ss", Locale("cze")).format(this.timeWaitedSeconds * 1000)
-                    binding.textViewPenaltyMinutesVarListDetailed.text = SimpleDateFormat("mm:ss", Locale("cze")).format(this.penaltySeconds * 1000)
+                    binding.textViewTimeWaitedVar.text = SimpleDateFormat("mm:ss", Locale("cze")).format(timeWaitedSeconds * 1000)
+                    binding.textViewPenaltyMinutesVarListDetailed.text = SimpleDateFormat("mm:ss", Locale("cze")).format(penaltySeconds * 1000)
                 } else {
                     binding.linearLayoutDetailedListContent.visibility = View.GONE
                 }

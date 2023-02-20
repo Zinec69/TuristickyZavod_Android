@@ -117,8 +117,10 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
                     }
                     binding.switchDisqualified.isChecked = runner.disqualified
 
-                    checkpointInfo.timeArrived = System.currentTimeMillis()
-                    runner.checkpointInfo.add(checkpointInfo)
+                    if (currentCheckpoint.id != 1) {
+                        val refereeName = getSharedPreferences("TZ", MODE_PRIVATE).getString("referee", "")!!
+                        checkpointInfo = CheckpointInfo(currentCheckpoint.id!!, refereeName, System.currentTimeMillis())
+                    }
 
                     runnersQueue.add(QueueInfo(runner))
                 }
@@ -156,8 +158,7 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
             if (id.isEmpty() ||
                 binding.editTextRunnerName.text!!.isEmpty() ||
                 binding.editTextRunnerTeam.text!!.isEmpty()) {
-                Toast.makeText(this@AddActivity, "Všechna pole jsou povinná", Toast.LENGTH_SHORT)
-                    .show()
+                Toast.makeText(this@AddActivity, "Všechna pole jsou povinná", Toast.LENGTH_SHORT).show()
             } else {
                 Thread {
                     if (runnerViewModel.getByID(id.toString().toInt()) != null) {
@@ -209,11 +210,6 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
 
         scanDialogView = layoutInflater.inflate(R.layout.dialog_add, null)
         initScanDialog()
-
-        if (currentCheckpoint.id != 1) {
-            val refereeName = getSharedPreferences("TZ", MODE_PRIVATE).getString("referee", "")!!
-            checkpointInfo = CheckpointInfo(currentCheckpoint.id!!, refereeName, System.currentTimeMillis())
-        }
     }
 
     private fun getUpdatedRunner(): Runner {
@@ -225,19 +221,21 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
 
         val runner = runnersQueue[0].runner
         runner.disqualified = disqualified
-        runner.penaltySeconds += penalty
+
+        if (currentCheckpoint.id != 1) {
+            checkpointInfo.penaltySeconds = penalty
+            checkpointInfo.timeDeparted = System.currentTimeMillis()
+            runner.checkpointInfo.add(checkpointInfo)
+        }
 
         return runner
     }
 
-    private fun handleNewRunner() {
+    private fun handleNextRunnerInQueue() {
         val delaySeconds = (System.currentTimeMillis() - runnersQueue[0].timeArrived!!) / 1000
-        runnersQueue[0].runner.timeWaitedSeconds += delaySeconds.toInt()
 
-        if (currentCheckpoint.id != 1) {
-            checkpointInfo.timeArrived = runnersQueue[0].timeArrived!!
-            runnersQueue[0].runner.checkpointInfo.add(checkpointInfo)
-        }
+        checkpointInfo.timeWaitedSeconds = delaySeconds.toInt()
+        checkpointInfo.timeArrived = runnersQueue[0].timeArrived!!
 
         val runner = runnersQueue[0].runner
 
@@ -308,6 +306,7 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
 
                     nfcHelper.writeRunnerOnTag(ndef, runner)
                     runnerViewModel.insert(runner)
+                    runnersQueue.removeAt(0)
                 }
 
                 runOnUiThread {
@@ -348,17 +347,16 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
         animation.animate().setDuration(700).withEndAction {
             if (stage == READING) {
                 runnersQueue.add(QueueInfo(runner, System.currentTimeMillis()))
+
                 Toast.makeText(this@AddActivity, "Běžec č. ${runner.runnerId} přidán do fronty", Toast.LENGTH_SHORT).show()
             } else {
                 Toast.makeText(this@AddActivity, "Běžec č. ${runner.runnerId} úspěšně uložen", Toast.LENGTH_SHORT).show()
-                if (runnersQueue.isNotEmpty())
-                    runnersQueue.removeAt(0)
 
                 if (runnersQueue.isEmpty()) {
                     setResult(RESULT_OK)
                     finish()
                 } else {
-                    handleNewRunner()
+                    handleNextRunnerInQueue()
                 }
             }
 
@@ -435,7 +433,7 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
                 if (runnersQueue.isEmpty()) {
                     finish()
                 } else {
-                    handleNewRunner()
+                    handleNextRunnerInQueue()
                 }
             }
             .create()

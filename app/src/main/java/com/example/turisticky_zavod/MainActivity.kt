@@ -33,6 +33,8 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.io.IOException
 import java.nio.charset.Charset
+import java.text.Normalizer
+import kotlin.collections.ArrayList
 
 
 class MainActivity : AppCompatActivity(), ReaderCallback {
@@ -416,7 +418,12 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
         Thread {
             val json = runnerViewModel.exportToJson()
 
-            val fileName = "${activeCheckpoint!!.name.replace(' ', '-')}_${System.currentTimeMillis()}.json"
+            val fileName = "${
+                activeCheckpoint!!.name
+                    .replace(' ', '-')
+                    .replace('/', '-')
+                    .removeNonSpacingMarks()
+            }_${System.currentTimeMillis()}.json"
 
             try {
                 val file = File(cacheDir.path, fileName)
@@ -561,3 +568,7 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
             .start()
     }
 }
+
+fun String.removeNonSpacingMarks() =
+    Normalizer.normalize(this, Normalizer.Form.NFD)
+        .replace("\\p{Mn}+".toRegex(), "")

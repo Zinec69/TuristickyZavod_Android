@@ -45,7 +45,7 @@ class NFCHelper {
 
         val allStrArray = allStr.split(";")
 
-        if (allStrArray.size < 8)
+        if (allStrArray.size < 6)
             throw NFCException("Data jsou nekompletní nebo ve špatném formátu")
 
         Log.d("NFC DEBUG READ", "Whole string: $allStr")
@@ -53,9 +53,18 @@ class NFCHelper {
         Log.d("NFC DEBUG READ", "Tag read in: ${System.currentTimeMillis() - start}ms")
 
         val checkpointInfoArray = ArrayList<CheckpointInfo>()
-        if (allStrArray.size > 8) {
-            for (j in 8 until allStrArray.size step 3) {
-                checkpointInfoArray.add(CheckpointInfo(allStrArray[j].toInt(), allStrArray[j + 1], allStrArray[j + 2].toLong()))
+        if (allStrArray.size > 6) {
+            for (j in 6 until allStrArray.size step 6) {
+                checkpointInfoArray.add(
+                    CheckpointInfo(
+                        allStrArray[j].toInt(),
+                        allStrArray[j + 1],
+                        allStrArray[j + 2].toLong() * 1000,
+                        if (allStrArray[j + 3] == "0") null else allStrArray[j + 3].toLong() * 1000,
+                        allStrArray[j + 4].toInt(),
+                        allStrArray[j + 5].toInt()
+                    )
+                )
             }
         }
 
@@ -63,11 +72,9 @@ class NFCHelper {
             allStrArray[0].toInt(),
             allStrArray[1],
             allStrArray[2],
-            allStrArray[3].toLong(),
-            if (allStrArray[4] == "0") null else allStrArray[4].toLong(),
-            allStrArray[5].toInt(),
-            allStrArray[6].toInt(),
-            allStrArray[7] == "1",
+            allStrArray[3].toLong() * 1000,
+            if (allStrArray[4] == "0") null else allStrArray[4].toLong() * 1000,
+            allStrArray[5] == "1",
             checkpointInfoArray
         )
     }
@@ -82,10 +89,11 @@ class NFCHelper {
 
     fun writeRunnerOnTag(tag: MifareClassic, runner: Runner) {
         val start = System.currentTimeMillis()
-        var allStr = "${runner.runnerId};${runner.name};${runner.team};${runner.startTime};${runner.finishTime ?: 0};" +
-                "${runner.timeWaitedSeconds};${runner.penaltySeconds};${if (runner.disqualified) 1 else 0}"
+        var allStr = "${runner.runnerId};${runner.name};${runner.team};${runner.startTime / 1000};" +
+                     "${if (runner.finishTime != null) runner.finishTime!! / 1000 else 0};${if (runner.disqualified) 1 else 0}"
         for (c in runner.checkpointInfo) {
-            allStr += ";${c.checkpointId};${c.refereeName};${c.timeArrived}"
+            allStr += ";${c.checkpointId};${c.refereeName};${c.timeArrived / 1000};" +
+                    "${if (c.timeDeparted != null) c.timeDeparted!! / 1000 else 0};${c.timeWaitedSeconds};${c.penaltySeconds}"
         }
         val allByteArrays = stringToByteArraySplits(allStr)
         val arraySizeBytes = allByteArrays.size.toString().toByteArray(Charset.forName("ISO-8859-2"))
@@ -122,7 +130,7 @@ class NFCHelper {
         Log.d("NFC DEBUG WRITE", "Tag written to in: ${System.currentTimeMillis() - start}ms")
     }
 
-    fun stringToByteArraySplits(str: String): List<ByteArray> {
+    private fun stringToByteArraySplits(str: String): List<ByteArray> {
         val bytes = str.toByteArray(Charset.forName("ISO-8859-2"))
         val byteList = bytes.toList()
         val splitList = mutableListOf<ByteArray>()
@@ -144,13 +152,12 @@ class NFCHelper {
     }
 
     fun checkNfcAvailability(nfcAdapter: NfcAdapter?): NfcAvailability {
-        return if (nfcAdapter == null) {
-            NfcAvailability.NOT_SUPPORTED
-        } else {
-            if (nfcAdapter.isEnabled)
-                NfcAvailability.READY
-            else
-                NfcAvailability.OFF
+        return when (nfcAdapter) {
+            null -> NfcAvailability.NOT_SUPPORTED
+            else -> when (nfcAdapter.isEnabled) {
+                true -> NfcAvailability.READY
+                false -> NfcAvailability.OFF
+            }
         }
     }
 
