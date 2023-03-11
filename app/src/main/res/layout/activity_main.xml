@@ -97,19 +97,19 @@
                 app:layout_constraintHorizontal_bias="0.0"
                 android:layout_marginStart="120dp" />
 
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/recyclerView"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:drawSelectorOnTop="false"
-                    android:layout_marginTop="65dp"
-                    android:layout_marginHorizontal="13dp"
-                    app:contentPaddingBottom="5dp"
-                    app:contentPaddingTop="5dp"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/textView_refereeName" />
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:drawSelectorOnTop="false"
+                android:layout_marginTop="65dp"
+                android:layout_marginHorizontal="13dp"
+                android:paddingBottom="90dp"
+                android:clipToPadding="false"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/textView_refereeName" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -132,7 +132,8 @@
             android:layout_marginEnd="25dp"
             android:layout_marginBottom="90dp"
             android:backgroundTint="@color/fab_start_finish"
-            android:text="Start"
+            android:text="@string/fab_start"
+            android:contentDescription="@string/fab_start_content_description"
             android:visibility="gone"
             app:icon="@drawable/directions_run" />
 
@@ -144,7 +145,8 @@
             android:layout_marginEnd="25dp"
             android:layout_marginBottom="150dp"
             android:backgroundTint="@color/fab_start_finish"
-            android:text="Finiš"
+            android:text="@string/fab_finish"
+            android:contentDescription="@string/fab_finish_content_description"
             android:visibility="gone"
             app:icon="@drawable/flag_fill" />
 

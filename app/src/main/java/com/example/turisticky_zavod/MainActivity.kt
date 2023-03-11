@@ -112,11 +112,11 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
         binding.toolbarMain.setNavigationOnClickListener { binding.drawerLayout.open() }
         binding.navigationView.setCheckedItem(if (rvAdapter.state == rvAdapter.BASIC) R.id.menuItem_viewBasic else R.id.menuItem_viewDetailed)
         binding.navigationView.setNavigationItemSelectedListener { item ->
-            item.isChecked = true
             binding.drawerLayout.close()
 
             when (item.itemId) {
                 R.id.menuItem_viewBasic -> {
+                    item.isChecked = true
                     if (rvAdapter.state != rvAdapter.BASIC) {
                         sp.edit().putInt("list_mode", rvAdapter.BASIC).apply()
                         rvAdapter.state = rvAdapter.BASIC
@@ -124,6 +124,7 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
                     }
                 }
                 R.id.menuItem_viewDetailed -> {
+                    item.isChecked = true
                     if (rvAdapter.state != rvAdapter.DETAILED) {
                         sp.edit().putInt("list_mode", rvAdapter.DETAILED).apply()
                         rvAdapter.state = rvAdapter.DETAILED

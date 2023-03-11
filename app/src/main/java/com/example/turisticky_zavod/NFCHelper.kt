@@ -21,20 +21,23 @@ class NFCHelper {
             }
 
             if (tag.authenticateSectorWithKeyA(tag.blockToSector(i), MifareClassic.KEY_DEFAULT)) {
-                val block = readBlock(tag, i)
-                if (count < 0) {
-                    try {
-                        count = block.toInt()
-                    } catch (e: java.lang.NumberFormatException) {
-                        throw NFCException("Data jsou nekompletní nebo ve špatném formátu")
+                while ((i + 1) % blocksInSector != 0) {
+                    val block = readBlock(tag, i)
+                    if (count < 0) {
+                        try {
+                            count = block.toInt()
+                        } catch (e: java.lang.NumberFormatException) {
+                            throw NFCException("Data jsou nekompletní nebo ve špatném formátu")
+                        }
+                    } else {
+                        allStr += block
                     }
-                } else {
-                    allStr += block
-                }
-                Log.d("NFC DEBUG READ", "Block $i: $block")
+                    Log.d("NFC DEBUG READ", "Block $i: $block")
 
-                i++
-                if (--count < 0) break
+                    i++
+                    if (--count < 0) break
+                }
+                if (count < 0) break
             } else {
                 i += if (i == 1) blocksInSector - 1 else blocksInSector
             }
@@ -110,15 +113,17 @@ class NFCHelper {
             }
 
             if (tag.authenticateSectorWithKeyA(tag.blockToSector(i), MifareClassic.KEY_DEFAULT)) {
-                if (stage < 0) {
-                    Log.d("NFC DEBUG WRITE", "Block $i: ${arraySizeBytesFit.toString(Charset.forName("ISO-8859-2"))}")
-                    tag.writeBlock(i, arraySizeBytesFit)
-                } else {
-                    Log.d("NFC DEBUG WRITE", "Block $i: ${allByteArrays[stage].toString(Charset.forName("ISO-8859-2"))}")
-                    tag.writeBlock(i, allByteArrays[stage])
+                while ((i + 1) % blocksInSector != 0 && stage < allByteArrays.size) {
+                    if (stage < 0) {
+                        Log.d("NFC DEBUG WRITE", "Block $i: ${arraySizeBytesFit.toString(Charset.forName("ISO-8859-2"))}")
+                        tag.writeBlock(i, arraySizeBytesFit)
+                    } else {
+                        Log.d("NFC DEBUG WRITE", "Block $i: ${allByteArrays[stage].toString(Charset.forName("ISO-8859-2"))}")
+                        tag.writeBlock(i, allByteArrays[stage])
+                    }
+                    i++
+                    stage++
                 }
-                i++
-                stage++
             } else {
                 i += if (i == 1) blocksInSector - 1 else blocksInSector
             }

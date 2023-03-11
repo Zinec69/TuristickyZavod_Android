@@ -6,6 +6,10 @@
     <string name="text_view_referee">Referee:</string>
     <string name="fab">New record</string>
     <string name="fab_content_description">Add new record</string>
+    <string name="fab_start">Start</string>
+    <string name="fab_start_content_description">Record of runner started</string>
+    <string name="fab_finish">Finish</string>
+    <string name="fab_finish_content_description">Record of runner finished</string>
     <string name="text_view_disqualified">Disqualified</string>
     <string name="text_view_runner_info">Runner info</string>
     <string name="menu_item_send_data_to_pc">Send data to PC</string>

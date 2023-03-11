@@ -127,7 +127,7 @@ class RunnerViewModel(application: Application) : AndroidViewModel(application) 
             .add(CheckpointInfoArrayListMoshiAdapter())
             .build()
         val type = Types.newParameterizedType(List::class.java, Runner::class.java)
-        val jsonAdapter: JsonAdapter<List<Runner>> = moshi.adapter<List<Runner>?>(type).indent("    ")
+        val jsonAdapter: JsonAdapter<List<Runner>> = moshi.adapter<List<Runner>?>(type).indent("\t")
 
         val json = jsonAdapter.toJson(runners.value)
 

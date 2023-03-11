@@ -8,6 +8,10 @@
     <string name="text_view_referee">Rozhodčí:</string>
     <string name="fab">Nový záznam</string>
     <string name="fab_content_description">Přidat nový záznam</string>
+    <string name="fab_start">Start</string>
+    <string name="fab_start_content_description">Záznam vyběhnutí běžce</string>
+    <string name="fab_finish">Finiš</string>
+    <string name="fab_finish_content_description">Záznam přiběhnutí běžce do cíle</string>
     <string name="text_view_disqualified">Diskvalifikován</string>
     <string name="text_view_runner_info">Informace o běžci</string>
 
