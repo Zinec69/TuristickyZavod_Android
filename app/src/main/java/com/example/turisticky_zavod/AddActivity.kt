@@ -1,5 +1,6 @@
 package com.example.turisticky_zavod
 
+import android.annotation.SuppressLint
 import android.content.DialogInterface
 import android.content.Intent
 import android.graphics.drawable.ColorDrawable
@@ -60,10 +61,10 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
     private lateinit var currentCheckpoint: Checkpoint
     private lateinit var checkpointInfo: CheckpointInfo
 
+    @SuppressLint("InflateParams")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // TODO: možná přidat možnost čekání pro všechny
         // TODO: možná vymazat azimuty, dřeviny, TT a KPČ a možná je zpracovávat v cíli
 
         binding = ActivityAddBinding.inflate(layoutInflater)
@@ -81,6 +82,7 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
         }
         checkpointJob.invokeOnCompletion {
             runOnUiThread {
+                @Suppress("DEPRECATION")
                 val runner =
                     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU)
                         intent.getParcelableExtra("runner")
@@ -117,13 +119,11 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
                     }
                     binding.switchDisqualified.isChecked = runner.disqualified
 
-                    if (currentCheckpoint.id != 1) {
-                        val refereeName = getSharedPreferences("TZ", MODE_PRIVATE).getString("referee", "")!!
-                        checkpointInfo = CheckpointInfo(currentCheckpoint.id!!, refereeName, System.currentTimeMillis())
-                    }
-
                     runnersQueue.add(QueueInfo(runner))
                 }
+
+                val refereeName = getSharedPreferences("TZ", MODE_PRIVATE).getString("referee", "")!!
+                checkpointInfo = CheckpointInfo(currentCheckpoint.id!!, refereeName, System.currentTimeMillis())
 
                 val colorsLayout = arrayOf(
                     ColorDrawable(getColor(R.color.background_layout_normal)),
@@ -222,11 +222,9 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
         val runner = runnersQueue[0].runner
         runner.disqualified = disqualified
 
-        if (currentCheckpoint.id != 1) {
-            checkpointInfo.penaltySeconds = penalty
-            checkpointInfo.timeDeparted = System.currentTimeMillis()
-            runner.checkpointInfo.add(checkpointInfo)
-        }
+        checkpointInfo.penaltySeconds = penalty
+        checkpointInfo.timeDeparted = System.currentTimeMillis()
+        runner.checkpointInfo.add(checkpointInfo)
 
         return runner
     }

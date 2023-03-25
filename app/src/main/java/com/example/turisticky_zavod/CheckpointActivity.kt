@@ -70,7 +70,7 @@ class CheckpointActivity: AppCompatActivity() {
             intent.putExtra("checkpoint", binding.autoCompleteTextViewMenuCheckpoints.text)
             setResult(RESULT_OK, intent)
 
-            getSharedPreferences("TZ", MODE_PRIVATE).edit().putString("referee", binding.editTextRefereeName.text?.dropLastWhile { c -> c.isWhitespace() }.toString()).apply()
+            getSharedPreferences("TZ", MODE_PRIVATE).edit().putString("referee", binding.editTextRefereeName.text!!.dropLastWhile { c -> c.isWhitespace() }.toString()).apply()
             lifecycleScope.launch(Dispatchers.IO) {
                 TZDatabase.getInstance(this@CheckpointActivity).checkpointDao().setActive(binding.autoCompleteTextViewMenuCheckpoints.text.toString())
             }
