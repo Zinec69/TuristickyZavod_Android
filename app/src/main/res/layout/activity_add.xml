@@ -147,8 +147,8 @@
                             android:enabled="false"
                             android:hint="@string/edit_text_runner_id_hint"
                             android:inputType="number"
-                            android:textSize="15sp"
-                            android:textColor="#7B6B8C"/>
+                            android:textColor="@color/edit_text_autofilled"
+                            android:textSize="15sp" />
 
                     </com.google.android.material.textfield.TextInputLayout>
 
@@ -170,8 +170,8 @@
                             android:enabled="false"
                             android:hint="@string/edit_text_runner_name_hint"
                             android:inputType="text"
-                            android:textSize="15sp"
-                            android:textColor="#7B6B8C"/>
+                            android:textColor="@color/edit_text_autofilled"
+                            android:textSize="15sp" />
 
                     </com.google.android.material.textfield.TextInputLayout>
 
@@ -194,8 +194,8 @@
                             android:enabled="false"
                             android:hint="@string/edit_text_runner_team_hint"
                             android:inputType="text"
-                            android:textSize="15sp"
-                            android:textColor="#7B6B8C" />
+                            android:textColor="@color/edit_text_autofilled"
+                            android:textSize="15sp" />
 
                     </com.google.android.material.textfield.TextInputLayout>
 

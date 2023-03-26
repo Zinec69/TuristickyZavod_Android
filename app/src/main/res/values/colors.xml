@@ -10,5 +10,6 @@
     <color name="background_layout_disqualified">#32FF0000</color>
     <color name="fab_start_finish">#E8E1FD</color>
     <color name="edit_text_default">#1C1B1F</color>
+    <color name="edit_text_autofilled">#CB1C1B1F</color>
     <color name="card_view_runnerId">#056700FF</color>
 </resources>

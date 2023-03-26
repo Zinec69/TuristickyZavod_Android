@@ -30,7 +30,7 @@
     <string name="text_view_attach_tag">Přiložte čip</string>
 
     <!--  activity_add  -->
-    <string name="edit_text_runner_id_hint">Číslo běžce</string>
+    <string name="edit_text_runner_id_hint">Startovní číslo</string>
     <string name="edit_text_runner_name_hint">Jméno</string>
     <string name="edit_text_runner_team_hint">Oddíl</string>
     <string name="text_view_penalty_minutes">Trestné minuty</string>
