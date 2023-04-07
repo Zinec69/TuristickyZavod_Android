@@ -87,23 +87,22 @@ class NFCHelper {
         return tag.readBlock(block)
             .dropLastWhile { b -> b == 0.toByte() }
             .toByteArray()
-            .toString(Charset.forName("ISO-8859-2"))
+            .toString(Charset.forName("Windows-1250"))
     }
 
     fun writeRunnerOnTag(tag: MifareClassic, runner: Runner) {
         val start = System.currentTimeMillis()
-        var allStr = "${runner.runnerId};${runner.name};${runner.team};${runner.startTime / 1000};" +
+        var allStr = "${runner.startNumber};${runner.name};${runner.team};${runner.startTime / 1000};" +
                      "${if (runner.finishTime != null) runner.finishTime!! / 1000 else 0};${if (runner.disqualified) 1 else 0}"
         for (c in runner.checkpointInfo) {
             allStr += ";${c.checkpointId};${c.refereeName};${c.timeArrived / 1000};" +
                     "${if (c.timeDeparted != null) c.timeDeparted!! / 1000 else 0};${c.timeWaitedSeconds};${c.penaltySeconds}"
         }
         val allByteArrays = stringToByteArraySplits(allStr)
-        val arraySizeBytes = allByteArrays.size.toString().toByteArray(Charset.forName("ISO-8859-2"))
+        val arraySizeBytes = allByteArrays.size.toString().toByteArray(Charset.forName("Windows-1250"))
         val arraySizeBytesFit = ByteArray(16) { i -> if (i < arraySizeBytes.size) arraySizeBytes[i] else 0 }
 
         var stage = -1
-
         var i = 1
         while (i < tag.blockCount && stage < allByteArrays.size) {
             val blocksInSector = tag.getBlockCountInSector(tag.blockToSector(i))
@@ -115,10 +114,10 @@ class NFCHelper {
             if (tag.authenticateSectorWithKeyA(tag.blockToSector(i), MifareClassic.KEY_DEFAULT)) {
                 while ((i + 1) % blocksInSector != 0 && stage < allByteArrays.size) {
                     if (stage < 0) {
-                        Log.d("NFC DEBUG WRITE", "Block $i: ${arraySizeBytesFit.toString(Charset.forName("ISO-8859-2"))}")
+                        Log.d("NFC DEBUG WRITE", "Block $i: ${arraySizeBytesFit.toString(Charset.forName("Windows-1250"))}")
                         tag.writeBlock(i, arraySizeBytesFit)
                     } else {
-                        Log.d("NFC DEBUG WRITE", "Block $i: ${allByteArrays[stage].toString(Charset.forName("ISO-8859-2"))}")
+                        Log.d("NFC DEBUG WRITE", "Block $i: ${allByteArrays[stage].toString(Charset.forName("Windows-1250"))}")
                         tag.writeBlock(i, allByteArrays[stage])
                     }
                     i++
@@ -136,7 +135,7 @@ class NFCHelper {
     }
 
     private fun stringToByteArraySplits(str: String): List<ByteArray> {
-        val bytes = str.toByteArray(Charset.forName("ISO-8859-2"))
+        val bytes = str.toByteArray(Charset.forName("Windows-1250"))
         val byteList = bytes.toList()
         val splitList = mutableListOf<ByteArray>()
 

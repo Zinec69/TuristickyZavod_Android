@@ -18,7 +18,7 @@ class FileShareActivity : AppCompatActivity() {
 
     private lateinit var fileName: String
 
-    private var activityResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+    private val activityResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         try {
             if (result.resultCode == Activity.RESULT_OK) {
                 result.data?.let {
@@ -29,8 +29,8 @@ class FileShareActivity : AppCompatActivity() {
                             "${BuildConfig.APPLICATION_ID}.provider",
                             cacheFile
                         )
-                        contentResolver.openOutputStream(uri)?.let { os ->
-                            contentResolver.openInputStream(cacheUri)?.copyTo(os)
+                        contentResolver.openOutputStream(uri)?.let { outputStream ->
+                            contentResolver.openInputStream(cacheUri)?.copyTo(outputStream)
                         }
                     }
                 }

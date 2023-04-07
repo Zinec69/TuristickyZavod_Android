@@ -8,7 +8,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
-@Database(entities = [Runner::class, Checkpoint::class], version = 28)
+@Database(entities = [Runner::class, Checkpoint::class], version = 31)
 @TypeConverters(CheckpointInfoJsonConverter::class)
 abstract class TZDatabase : RoomDatabase() {
     abstract fun runnerDao(): RunnerDao
@@ -56,6 +56,7 @@ private fun populateCheckpoints(context: Context) {
             insert(Checkpoint("Turistické a topografické značky", false, 10))
             insert(Checkpoint("Poznávání dřevin", false, 11))
             insert(Checkpoint("Kulturně poznávací činnost", false, 12))
+            insert(Checkpoint("Kontrola \"X\"", false, 13))
         }
     }
 }

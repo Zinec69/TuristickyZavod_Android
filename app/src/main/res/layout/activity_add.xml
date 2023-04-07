@@ -19,7 +19,7 @@
             android:layout_height="?attr/actionBarSize"
             app:titleCentered="false"
             app:subtitleCentered="false"
-            app:subtitle="Nový záznam"
+            app:subtitle="@string/toolbar_subtitle_add_runners"
             app:navigationIcon="@drawable/close_24"
             app:navigationIconTint="@color/runnerInfo">
 

@@ -17,13 +17,13 @@ interface CheckpointDao {
     @Query("SELECT name FROM checkpoint")
     fun getNames(): Array<String>
 
-    @Query("SELECT * FROM checkpoint WHERE active = TRUE LIMIT 1")
+    @Query("SELECT * FROM checkpoint WHERE active = 1 LIMIT 1")
     fun getActive(): Checkpoint?
 
-    @Query("UPDATE checkpoint SET active = TRUE WHERE name = :name")
+    @Query("UPDATE checkpoint SET active = 1 WHERE name = :name")
     suspend fun setActive(name: String)
 
-    @Query("UPDATE checkpoint SET active = FALSE WHERE active = TRUE")
+    @Query("UPDATE checkpoint SET active = FALSE WHERE active = 1")
     suspend fun reset()
 
     @Insert

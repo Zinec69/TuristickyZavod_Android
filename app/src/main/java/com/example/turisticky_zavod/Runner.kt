@@ -13,9 +13,9 @@ import kotlinx.parcelize.Parcelize
 
 @Parcelize
 @JsonClass(generateAdapter = true)
-@Entity(indices = [Index(value = ["runnerId"], unique = true)])
+@Entity(indices = [Index(value = ["startNumber"], unique = true)])
 data class Runner(
-    val runnerId: Int,
+    val startNumber: Int,
     val name: String,
     val team: String,
     val startTime: Long,
@@ -32,8 +32,8 @@ interface RunnerDao {
     @Query("SELECT * FROM runner ORDER BY id ASC")
     fun getAll(): LiveData<List<Runner>>
 
-    @Query("SELECT * FROM runner WHERE runnerId = :id")
-    fun getByID(id: Int): Runner?
+    @Query("SELECT * FROM runner WHERE startNumber = :startNumber")
+    fun getByStartNumber(startNumber: Int): Runner?
 
     @Query("SELECT * FROM runner ORDER BY id DESC LIMIT 1")
     fun getLast(): Runner?
@@ -57,8 +57,8 @@ interface RunnerDao {
 class RunnerRepository(private val runnerDao: RunnerDao) {
     val runners: LiveData<List<Runner>> = runnerDao.getAll()
 
-    fun getByID(id: Int): Runner? {
-        return runnerDao.getByID(id)
+    fun getByStartNumber(startNumber: Int): Runner? {
+        return runnerDao.getByStartNumber(startNumber)
     }
 
     fun getLast(): Runner? {
@@ -97,7 +97,7 @@ class RunnerViewModel(application: Application) : AndroidViewModel(application) 
         runners = repository.runners
     }
 
-    fun getByID(id: Int) = repository.getByID(id)
+    fun getByStartNumber(startNumber: Int) = repository.getByStartNumber(startNumber)
 
     fun getLast() = repository.getLast()
 
@@ -131,7 +131,6 @@ class RunnerViewModel(application: Application) : AndroidViewModel(application) 
 
         val json = jsonAdapter.toJson(runners.value)
 
-        Log.d("JSON EXPORT", json)
         Log.d("JSON EXPORT", "Done in ${System.currentTimeMillis() - start} ms")
 
         return json

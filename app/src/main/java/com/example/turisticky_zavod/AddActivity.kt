@@ -12,11 +12,13 @@ import android.nfc.TagLostException
 import android.nfc.tech.MifareClassic
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.*
 import androidx.activity.addCallback
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -61,6 +63,23 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
     private lateinit var currentCheckpoint: Checkpoint
     private lateinit var checkpointInfo: CheckpointInfo
 
+    private var nfcActivityResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+        Thread {
+            var i = 0
+            while (nfcHelper.checkNfcAvailability(nfcAdapter) != NFCHelper.NfcAvailability.READY && i++ < 50) {
+                Thread.sleep(100)
+            }
+            if (nfcHelper.checkNfcAvailability(nfcAdapter) == NFCHelper.NfcAvailability.READY) {
+                runOnUiThread {
+                    scanDialogView.findViewById<LottieAnimationView>(R.id.animation_nfcScanning).visibility = View.VISIBLE
+                    scanDialogView.findViewById<ConstraintLayout>(R.id.constraintLayout_nfcOff).visibility = View.GONE
+                    scanDialogView.findViewById<TextView>(R.id.textView_attachTag).text = getString(R.string.text_view_attach_tag)
+                    startScanningNFC()
+                }
+            }
+        }.start()
+    }
+
     @SuppressLint("InflateParams")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -101,7 +120,7 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
                     binding.editTextRunnerTeam.setTextColor(getColor(R.color.edit_text_default))
                     showKeyboard(binding.editTextRunnerId)
                 } else {
-                    binding.editTextRunnerId.setText(runner.runnerId.toString())
+                    binding.editTextRunnerId.setText(runner.startNumber.toString())
                     binding.editTextRunnerName.setText(runner.name)
                     binding.editTextRunnerTeam.setText(runner.team)
                     when (currentCheckpoint.id) {
@@ -161,7 +180,7 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
                 Toast.makeText(this@AddActivity, "Všechna pole jsou povinná", Toast.LENGTH_SHORT).show()
             } else {
                 Thread {
-                    if (runnerViewModel.getByID(id.toString().toInt()) != null) {
+                    if (runnerViewModel.getByStartNumber(id.toString().toInt()) != null) {
                         runOnUiThread {
                             Toast.makeText(this@AddActivity, "Běžec s tímto číslem již existuje", Toast.LENGTH_SHORT).show()
                         }
@@ -238,7 +257,7 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
         val runner = runnersQueue[0].runner
 
         binding.editTextRunnerId.animate().alpha(0f).setDuration(200).withEndAction {
-            binding.editTextRunnerId.setText(runner.runnerId.toString())
+            binding.editTextRunnerId.setText(runner.startNumber.toString())
             binding.editTextRunnerId.animate().alpha(1f).setDuration(200).start()
         }.start()
         binding.editTextRunnerName.animate().alpha(0f).setDuration(200).withEndAction {
@@ -270,6 +289,10 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
             try {
                 ndef.connect()
 
+                runOnUiThread {
+                    scanDialog.findViewById<TextView>(R.id.textView_attachTag)?.text = getString(R.string.text_view_dont_remove_tag)
+                }
+
                 if (runnersQueue.isEmpty()) {
                     val runner = Runner(
                         binding.editTextRunnerId.text!!.toString().toInt(),
@@ -287,13 +310,13 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
 
                 var runner = nfcHelper.readRunner(ndef)
 
-                if (stage == WRITING && runner.runnerId != runnersQueue[0].runner.runnerId) {
+                if (stage == WRITING && runner.startNumber != runnersQueue[0].runner.startNumber) {
                     runOnUiThread {
                         scanFail(null, "Čip se neshoduje s právě zpracovávaným běžcem")
                     }
                     return
                 }
-                if (runnerViewModel.getByID(runner.runnerId) != null) {
+                if (runnerViewModel.getByStartNumber(runner.startNumber) != null) {
                     runOnUiThread {
                         scanFail(null, "Tento běžec již byl přidán")
                     }
@@ -346,9 +369,9 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
             if (stage == READING) {
                 runnersQueue.add(QueueInfo(runner, System.currentTimeMillis()))
 
-                Toast.makeText(this@AddActivity, "Běžec č. ${runner.runnerId} přidán do fronty", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@AddActivity, "Běžec č. ${runner.startNumber} přidán do fronty", Toast.LENGTH_SHORT).show()
             } else {
-                Toast.makeText(this@AddActivity, "Běžec č. ${runner.runnerId} úspěšně uložen", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@AddActivity, "Běžec č. ${runner.startNumber} úspěšně uložen", Toast.LENGTH_SHORT).show()
 
                 if (runnersQueue.isEmpty()) {
                     setResult(RESULT_OK)
@@ -381,16 +404,20 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
         if (nfcHelper.checkNfcAvailability(nfcAdapter) == NFCHelper.NfcAvailability.OFF) {
             scanDialogView.findViewById<Button>(R.id.button_turnOnNfc)
                 .setOnClickListener {
-                    startActivity(Intent("android.settings.NFC_SETTINGS"))
-                    scanDialogView.findViewById<ConstraintLayout>(R.id.constraintLayout_nfcOff).visibility = View.GONE
-                    scanDialogView.findViewById<LottieAnimationView>(R.id.animation_nfcScanning).visibility = View.VISIBLE
-                    startScanningNFC()
+                    val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        Intent(Settings.Panel.ACTION_NFC)
+                    } else {
+                        Intent("android.settings.NFC_SETTINGS")
+                    }
+                    nfcActivityResultLauncher.launch(intent)
                 }
             scanDialogView.findViewById<LottieAnimationView>(R.id.animation_nfcScanning).visibility = View.GONE
             scanDialogView.findViewById<ConstraintLayout>(R.id.constraintLayout_nfcOff).visibility = View.VISIBLE
+            scanDialogView.findViewById<TextView>(R.id.textView_attachTag).text = getString(R.string.text_view_nfc_off)
         } else {
             scanDialogView.findViewById<LottieAnimationView>(R.id.animation_nfcScanning).visibility = View.VISIBLE
             scanDialogView.findViewById<ConstraintLayout>(R.id.constraintLayout_nfcOff).visibility = View.GONE
+            scanDialogView.findViewById<TextView>(R.id.textView_attachTag).text = getString(R.string.text_view_attach_tag)
             startScanningNFC()
         }
 

@@ -21,6 +21,7 @@
     <string name="text_view_nfc_off">NFC is off</string>
     <string name="button_turn_on_nfc">Turn NFC on</string>
     <string name="text_view_attach_tag">Attach tag</string>
+    <string name="text_view_dont_remove_tag">Don\'t remove tag</string>
     <string name="edit_text_runner_id_hint">Start number</string>
     <string name="edit_text_runner_name_hint">Name</string>
     <string name="edit_text_runner_team_hint">Team</string>
@@ -46,4 +47,6 @@
     <string name="menu_item_action_export_runners">Export the list of runners</string>
     <string name="menu_item_action_delete_runners">Delete the list of runners</string>
     <string name="menu_item_action_reset">Reset</string>
+    <string name="toolbar_subtitle_add_runners">New record</string>
+    <string name="toolbar_subtitle_wifi">Receive data from PC</string>
 </resources>

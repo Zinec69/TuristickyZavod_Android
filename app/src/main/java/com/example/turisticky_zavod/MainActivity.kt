@@ -9,7 +9,9 @@ import android.nfc.NfcAdapter.*
 import android.nfc.Tag
 import android.nfc.TagLostException
 import android.nfc.tech.MifareClassic
+import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import android.view.View
 import android.widget.*
@@ -34,7 +36,6 @@ import java.io.File
 import java.io.IOException
 import java.nio.charset.Charset
 import java.text.Normalizer
-import kotlin.collections.ArrayList
 
 
 class MainActivity : AppCompatActivity(), ReaderCallback {
@@ -56,7 +57,7 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
     private lateinit var newRunnerDialog: AlertDialog
     private lateinit var cancelDialog: AlertDialog
 
-    private var activityResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+    private var checkpointActivityResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             val name = result.data?.getCharSequenceExtra("name")
             Thread {
@@ -65,6 +66,23 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
             name?.let { binding.textViewRefereeNameVar.text = it }
             binding.textViewCheckpointNameVar.text = result.data?.getCharSequenceExtra("checkpoint")
         }
+    }
+
+    private var nfcActivityResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+        Thread {
+            var i = 0
+            while (nfcHelper.checkNfcAvailability(nfcAdapter) != NfcAvailability.READY && i++ < 50) {
+                Thread.sleep(100)
+            }
+            if (nfcHelper.checkNfcAvailability(nfcAdapter) == NfcAvailability.READY) {
+                runOnUiThread {
+                    newRunnerDialogView.findViewById<LottieAnimationView>(R.id.animation_nfcScanning).visibility = View.VISIBLE
+                    newRunnerDialogView.findViewById<ConstraintLayout>(R.id.constraintLayout_nfcOff).visibility = View.GONE
+                    newRunnerDialogView.findViewById<TextView>(R.id.textView_attachTag).text = getString(R.string.text_view_attach_tag)
+                    startScanningNFC()
+                }
+            }
+        }.start()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -100,7 +118,7 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
             activeCheckpoint = TZDatabase.getInstance(this@MainActivity).checkpointDao().getActive()
             runOnUiThread {
                 if (activeCheckpoint == null) {
-                    activityResultLauncher.launch(Intent(this@MainActivity, CheckpointActivity::class.java))
+                    checkpointActivityResultLauncher.launch(Intent(this@MainActivity, CheckpointActivity::class.java))
                 } else {
                     val referee = sp.getString("referee", " - ")
                     binding.textViewCheckpointNameVar.text = activeCheckpoint!!.name
@@ -222,11 +240,15 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
             try {
                 ndef.connect()
 
+                runOnUiThread {
+                    newRunnerDialog.findViewById<TextView>(R.id.textView_attachTag)?.text = getString(R.string.text_view_dont_remove_tag)
+                }
+
                 var runner = nfcHelper.readRunner(ndef)
 
                 if (activeCheckpoint!!.id == 1) {
                     for (i in 0 until runnersList.size) {
-                        if (runnersList[i].runnerId == runner.runnerId) {
+                        if (runnersList[i].startNumber == runner.startNumber) {
                             if (runnersList[i].finishTime != null) {
                                 runOnUiThread {
                                     scanFail(null, "Tento běžec již byl zpracován")
@@ -258,7 +280,7 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
                     return
                 }
 
-                if (runnersList.find { r -> r.runnerId == runner.runnerId } != null) {
+                if (runnersList.find { r -> r.startNumber == runner.startNumber } != null) {
                     runOnUiThread {
                         scanFail(null, "Tento běžec již byl přidán")
                     }
@@ -331,11 +353,12 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
         if (nfcHelper.checkNfcAvailability(nfcAdapter) == NfcAvailability.OFF) {
             newRunnerDialogView.findViewById<Button>(R.id.button_turnOnNfc)
                 .setOnClickListener {
-                    startActivity(Intent("android.settings.NFC_SETTINGS"))
-                    newRunnerDialogView.findViewById<ConstraintLayout>(R.id.constraintLayout_nfcOff).visibility = View.GONE
-                    newRunnerDialogView.findViewById<LottieAnimationView>(R.id.animation_nfcScanning).visibility = View.VISIBLE
-                    newRunnerDialogView.findViewById<TextView>(R.id.textView_attachTag).text = getString(R.string.text_view_attach_tag)
-                    startScanningNFC()
+                    val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        Intent(Settings.Panel.ACTION_NFC)
+                    } else {
+                        Intent("android.settings.NFC_SETTINGS")
+                    }
+                    nfcActivityResultLauncher.launch(intent)
                 }
             newRunnerDialogView.findViewById<LottieAnimationView>(R.id.animation_nfcScanning).visibility = View.GONE
             newRunnerDialogView.findViewById<ConstraintLayout>(R.id.constraintLayout_nfcOff).visibility = View.VISIBLE
@@ -431,7 +454,7 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
                 file.createNewFile()
 
                 if (file.exists()) {
-                    file.writeText(json, Charset.forName("ISO-8859-2"))
+                    file.writeText(json, Charset.forName("Windows-1250"))
                     val uri = FileProvider.getUriForFile(
                         this@MainActivity,
                         "${BuildConfig.APPLICATION_ID}.provider",
@@ -469,7 +492,7 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
         lifecycleScope.launch(Dispatchers.IO) {
             TZDatabase.getInstance(this@MainActivity).checkpointDao().reset()
         }
-        activityResultLauncher.launch(Intent(this@MainActivity, CheckpointActivity::class.java))
+        checkpointActivityResultLauncher.launch(Intent(this@MainActivity, CheckpointActivity::class.java))
     }
 
     private fun showDeleteRunnerDialog(position: Int) {

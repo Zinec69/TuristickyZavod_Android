@@ -28,6 +28,7 @@
     <string name="text_view_nfc_off">NFC je vypnuté </string>
     <string name="button_turn_on_nfc">Zapnout NFC</string>
     <string name="text_view_attach_tag">Přiložte čip</string>
+    <string name="text_view_dont_remove_tag">Neodebírejte čip</string>
 
     <!--  activity_add  -->
     <string name="edit_text_runner_id_hint">Startovní číslo</string>
@@ -38,6 +39,7 @@
     <string name="text_view_runner_delay">Zdržení:</string>
     <string name="button_save">Uložit</string>
     <string name="button_cancel">Zrušit</string>
+    <string name="toolbar_subtitle_add_runners">Nový záznam</string>
 
     <!--  list_items  -->
     <string name="text_view_runner_id_placeholder" translatable="false">1</string>
@@ -73,5 +75,8 @@
     <string name="menu_item_action_export_runners">Exportovat seznam běžců</string>
     <string name="menu_item_action_delete_runners">Vymazat seznam běžců</string>
     <string name="menu_item_action_reset">Resetovat</string>
+
+    <!--  activity_wifi  -->
+    <string name="toolbar_subtitle_wifi">Příjem dat z PC</string>
 
 </resources>
