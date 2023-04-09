@@ -12,7 +12,7 @@
     <string name="fab_start_content_description">Záznam vyběhnutí běžce</string>
     <string name="fab_finish">Finiš</string>
     <string name="fab_finish_content_description">Záznam přiběhnutí běžce do cíle</string>
-    <string name="text_view_disqualified">Diskvalifikován</string>
+    <string name="text_view_disqualified">Diskvalifikován/a</string>
     <string name="text_view_runner_info">Informace o běžci</string>
 
     <!--  menu_main  -->

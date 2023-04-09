@@ -57,7 +57,7 @@ class NFCHelper {
 
         val checkpointInfoArray = ArrayList<CheckpointInfo>()
         if (allStrArray.size > 6) {
-            for (j in 6 until allStrArray.size step 6) {
+            for (j in 6 until allStrArray.size step 7) {
                 checkpointInfoArray.add(
                     CheckpointInfo(
                         allStrArray[j].toInt(),
@@ -65,7 +65,8 @@ class NFCHelper {
                         allStrArray[j + 2].toLong() * 1000,
                         if (allStrArray[j + 3] == "0") null else allStrArray[j + 3].toLong() * 1000,
                         allStrArray[j + 4].toInt(),
-                        allStrArray[j + 5].toInt()
+                        allStrArray[j + 5].toInt(),
+                        allStrArray[j + 6] == "1"
                     )
                 )
             }
@@ -96,7 +97,8 @@ class NFCHelper {
                      "${if (runner.finishTime != null) runner.finishTime!! / 1000 else 0};${if (runner.disqualified) 1 else 0}"
         for (c in runner.checkpointInfo) {
             allStr += ";${c.checkpointId};${c.refereeName};${c.timeArrived / 1000};" +
-                    "${if (c.timeDeparted != null) c.timeDeparted!! / 1000 else 0};${c.timeWaitedSeconds};${c.penaltySeconds}"
+                      "${if (c.timeDeparted != null) c.timeDeparted!! / 1000 else 0};${c.timeWaitedSeconds};" +
+                      "${c.penaltySeconds};${if (c.disqualified) 1 else 0}"
         }
         val allByteArrays = stringToByteArraySplits(allStr)
         val arraySizeBytes = allByteArrays.size.toString().toByteArray(Charset.forName("Windows-1250"))

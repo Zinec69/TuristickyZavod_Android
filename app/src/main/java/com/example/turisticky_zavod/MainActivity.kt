@@ -235,14 +235,14 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
     }
 
     override fun onTagDiscovered(tag: Tag?) {
+        runOnUiThread {
+            newRunnerDialog.findViewById<TextView>(R.id.textView_attachTag)?.text = getString(R.string.text_view_dont_remove_tag)
+        }
+
         val ndef = MifareClassic.get(tag)
         if (ndef != null) {
             try {
                 ndef.connect()
-
-                runOnUiThread {
-                    newRunnerDialog.findViewById<TextView>(R.id.textView_attachTag)?.text = getString(R.string.text_view_dont_remove_tag)
-                }
 
                 var runner = nfcHelper.readRunner(ndef)
 
@@ -255,8 +255,14 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
                                 }
                                 return
                             }
+                            runnersList[i].checkpointInfo = runner.checkpointInfo
                             runner = runnersList[i]
                             runner.finishTime = System.currentTimeMillis()
+
+                            val checkpointInfoIndex = runner.checkpointInfo.indexOfFirst { x -> x.checkpointId == 1 }
+                            if (checkpointInfoIndex >= 0) {
+                                runner.checkpointInfo[checkpointInfoIndex].timeArrived = runner.finishTime!!
+                            }
 
                             runnersList.removeAt(i)
                             runnersList.add(0, runner)

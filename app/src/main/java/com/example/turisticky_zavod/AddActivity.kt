@@ -243,6 +243,7 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
 
         checkpointInfo.penaltySeconds = penalty
         checkpointInfo.timeDeparted = System.currentTimeMillis()
+        checkpointInfo.disqualified = disqualified
         runner.checkpointInfo.add(checkpointInfo)
 
         return runner
@@ -284,14 +285,14 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
     }
 
     override fun onTagDiscovered(tag: Tag?) {
+        runOnUiThread {
+            scanDialog.findViewById<TextView>(R.id.textView_attachTag)?.text = getString(R.string.text_view_dont_remove_tag)
+        }
+
         val ndef = MifareClassic.get(tag)
         if (ndef != null) {
             try {
                 ndef.connect()
-
-                runOnUiThread {
-                    scanDialog.findViewById<TextView>(R.id.textView_attachTag)?.text = getString(R.string.text_view_dont_remove_tag)
-                }
 
                 if (runnersQueue.isEmpty()) {
                     val runner = Runner(
@@ -300,6 +301,8 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
                         binding.editTextRunnerTeam.text!!.dropLastWhile { c -> c.isWhitespace() }.toString(),
                         System.currentTimeMillis()
                     )
+                    checkpointInfo.timeDeparted = runner.startTime
+                    runner.checkpointInfo.add(checkpointInfo)
                     nfcHelper.writeRunnerOnTag(ndef, runner)
                     runnerViewModel.insert(runner)
                     runOnUiThread {

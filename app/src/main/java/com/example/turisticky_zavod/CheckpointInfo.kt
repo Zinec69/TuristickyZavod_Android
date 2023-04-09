@@ -14,6 +14,7 @@ data class CheckpointInfo(
     var timeDeparted: Long? = null,
     var timeWaitedSeconds: Int = 0,
     var penaltySeconds: Int = 0,
+    var disqualified: Boolean = false
 ) : Parcelable
 
 class CheckpointInfoJsonConverter {

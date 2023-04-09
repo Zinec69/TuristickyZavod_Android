@@ -8,7 +8,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
-@Database(entities = [Runner::class, Checkpoint::class], version = 31)
+@Database(entities = [Runner::class, Checkpoint::class], version = 32)
 @TypeConverters(CheckpointInfoJsonConverter::class)
 abstract class TZDatabase : RoomDatabase() {
     abstract fun runnerDao(): RunnerDao
