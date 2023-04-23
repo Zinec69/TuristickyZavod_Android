@@ -162,6 +162,9 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
                         Toast.makeText(this@MainActivity, "Žádná data ke smazání", Toast.LENGTH_SHORT).show()
                     }
                 }
+                R.id.menuItem_test -> {
+                    startActivity(Intent(this@MainActivity, WifiActivity::class.java))
+                }
             }
 
             true
@@ -247,43 +250,62 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
                 var runner = nfcHelper.readRunner(ndef)
 
                 if (activeCheckpoint!!.id == 1) {
-                    for (i in 0 until runnersList.size) {
-                        if (runnersList[i].startNumber == runner.startNumber) {
-                            if (runnersList[i].finishTime != null) {
+                    if (runner.finishTime == null) {
+                        for (i in 0 until runnersList.size) {
+                            if (runnersList[i].startNumber == runner.startNumber) {
+
+                                runnersList[i].checkpointInfo = runner.checkpointInfo
+                                runner = runnersList[i]
+                                runner.finishTime = System.currentTimeMillis()
+
+                                val checkpointInfoIndex =
+                                    runner.checkpointInfo.indexOfFirst { x -> x.checkpointId == 1 }
+                                if (checkpointInfoIndex >= 0) {
+                                    runner.checkpointInfo[checkpointInfoIndex].timeArrived =
+                                        runner.finishTime!!
+                                }
+
+                                runnersList.removeAt(i)
+                                runnersList.add(0, runner)
+
+                                nfcHelper.writeRunnerOnTag(ndef, runner)
+
+                                runnerViewModel.update(runner)
+
                                 runOnUiThread {
-                                    scanFail(null, "Tento běžec již byl zpracován")
+                                    rvAdapter.notifyItemRemoved(i)
+                                    rvAdapter.notifyItemInserted(0)
+                                    binding.recyclerView.scrollToPosition(0)
+                                    scanSuccess(runner, false)
                                 }
                                 return
                             }
-                            runnersList[i].checkpointInfo = runner.checkpointInfo
-                            runner = runnersList[i]
-                            runner.finishTime = System.currentTimeMillis()
-
-                            val checkpointInfoIndex = runner.checkpointInfo.indexOfFirst { x -> x.checkpointId == 1 }
-                            if (checkpointInfoIndex >= 0) {
-                                runner.checkpointInfo[checkpointInfoIndex].timeArrived = runner.finishTime!!
-                            }
-
-                            runnersList.removeAt(i)
-                            runnersList.add(0, runner)
-
-                            nfcHelper.writeRunnerOnTag(ndef, runner)
-
-                            runnerViewModel.update(runner)
-
-                            runOnUiThread {
-                                rvAdapter.notifyItemRemoved(i)
-                                rvAdapter.notifyItemInserted(0)
-                                binding.recyclerView.scrollToPosition(0)
-                                scanSuccess(runner, false)
-                            }
-                            return
                         }
+                        for (ch in runner.checkpointInfo) {
+                            if (ch.checkpointId == 1) {
+                                runner.finishTime = System.currentTimeMillis()
+                                ch.timeArrived = runner.finishTime!!
+
+                                nfcHelper.writeRunnerOnTag(ndef, runner)
+
+                                runnerViewModel.insert(runner)
+
+                                runOnUiThread {
+                                    scanSuccess(runner, false)
+                                }
+                                return
+                            }
+                        }
+                        runOnUiThread {
+                            scanFail(null, "Tento běžec nemá záznam o startu")
+                        }
+                        return
+                    } else {
+                        runOnUiThread {
+                            scanFail(null, "Tento běžec již byl zpracován")
+                        }
+                        return
                     }
-                    runOnUiThread {
-                        scanFail(null, "Tento běžec nemá záznam o startu")
-                    }
-                    return
                 }
 
                 if (runnersList.find { r -> r.startNumber == runner.startNumber } != null) {

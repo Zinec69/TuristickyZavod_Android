@@ -2,10 +2,10 @@ package com.example.turisticky_zavod
 
 import android.content.Intent
 import android.os.Bundle
+import android.text.Editable
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
-import android.widget.Toast
 import androidx.activity.addCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -61,21 +61,43 @@ class CheckpointActivity: AppCompatActivity() {
     }
 
     private fun save() {
-        if (binding.autoCompleteTextViewMenuCheckpoints.text.isEmpty() ||
-                binding.editTextRefereeName.text!!.isEmpty()) {
-            Toast.makeText(this@CheckpointActivity, "Všechna pole jsou povinná", Toast.LENGTH_SHORT).show()
-        } else {
+        val checkpointName = binding.autoCompleteTextViewMenuCheckpoints.text
+        val refereeName = binding.editTextRefereeName.text!!.trim()
+
+        if (validateTextFields(checkpointName, refereeName)) {
             val intent = Intent()
-            intent.putExtra("name", binding.editTextRefereeName.text)
-            intent.putExtra("checkpoint", binding.autoCompleteTextViewMenuCheckpoints.text)
+            intent.putExtra("name", refereeName)
+            intent.putExtra("checkpoint", checkpointName)
             setResult(RESULT_OK, intent)
 
-            getSharedPreferences("TZ", MODE_PRIVATE).edit().putString("referee", binding.editTextRefereeName.text!!.dropLastWhile { c -> c.isWhitespace() }.toString()).apply()
+            getSharedPreferences("TZ", MODE_PRIVATE).edit().putString("referee", refereeName.toString()).apply()
             lifecycleScope.launch(Dispatchers.IO) {
                 TZDatabase.getInstance(this@CheckpointActivity).checkpointDao().setActive(binding.autoCompleteTextViewMenuCheckpoints.text.toString())
             }
 
             finish()
         }
+    }
+
+    private fun validateTextFields(checkpointName: Editable, refereeName: CharSequence): Boolean {
+        var validated = true
+
+        if (refereeName.isEmpty()) {
+            validated = false
+            binding.editTextRefereeName.error = "Jméno je povinné"
+        } else if (!refereeName.contains(' ')) {
+            binding.editTextRefereeName.error = "Text musí obsahovat jméno i příjmení"
+            validated = false
+        } else if (!refereeName.all { ch -> ch.isLetter() || ch == ' ' }) {
+            binding.editTextRefereeName.error = "Jméno obsahuje nepovolené znaky"
+            validated = false
+        }
+
+        if (checkpointName.isEmpty()) {
+            validated = false
+            binding.autoCompleteTextViewMenuCheckpoints.error = "Stanoviště je povinné"
+        }
+
+        return validated
     }
 }

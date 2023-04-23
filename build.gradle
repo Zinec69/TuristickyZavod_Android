@@ -7,7 +7,7 @@ plugins {
 
 ext {
     room_version = '2.5.1'
-    lottie_version = '5.2.0'
+    lottie_version = '6.0.0'
     lifecycle_version = '2.6.1'
     material_version = '1.9.0-beta01'
     // TODO: 1.9.0-beta01

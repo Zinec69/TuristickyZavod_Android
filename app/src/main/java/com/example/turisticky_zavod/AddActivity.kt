@@ -173,14 +173,9 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
         checkpointJob.start()
 
         binding.buttonSave.setOnClickListener {
-            val id = binding.editTextRunnerId.text!!
-            if (id.isEmpty() ||
-                binding.editTextRunnerName.text!!.isEmpty() ||
-                binding.editTextRunnerTeam.text!!.isEmpty()) {
-                Toast.makeText(this@AddActivity, "Všechna pole jsou povinná", Toast.LENGTH_SHORT).show()
-            } else {
+            if (validateTextFields()) {
                 Thread {
-                    if (runnerViewModel.getByStartNumber(id.toString().toInt()) != null) {
+                    if (runnerViewModel.getByStartNumber(binding.editTextRunnerId.text!!.toString().toInt()) != null) {
                         runOnUiThread {
                             Toast.makeText(this@AddActivity, "Běžec s tímto číslem již existuje", Toast.LENGTH_SHORT).show()
                         }
@@ -297,8 +292,8 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
                 if (runnersQueue.isEmpty()) {
                     val runner = Runner(
                         binding.editTextRunnerId.text!!.toString().toInt(),
-                        binding.editTextRunnerName.text!!.dropLastWhile { c -> c.isWhitespace() }.toString(),
-                        binding.editTextRunnerTeam.text!!.dropLastWhile { c -> c.isWhitespace() }.toString(),
+                        binding.editTextRunnerName.text!!.trim().toString(),
+                        binding.editTextRunnerTeam.text!!.trim().toString(),
                         System.currentTimeMillis()
                     )
                     checkpointInfo.timeDeparted = runner.startTime
@@ -446,6 +441,40 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
 
     private fun stopScanningNFC() {
         nfcAdapter!!.disableReaderMode(this@AddActivity)
+    }
+
+    private fun validateTextFields(): Boolean {
+        var validated = true
+
+        val id = binding.editTextRunnerId.text!!
+        val name = binding.editTextRunnerName.text!!.trim()
+        val team = binding.editTextRunnerTeam.text!!.trim()
+
+        if (id.isEmpty()) {
+            validated = false
+            binding.editTextRunnerId.error = "Startovní číslo je povinné"
+        }
+
+        if (name.isEmpty()) {
+            validated = false
+            binding.editTextRunnerName.error = "Jméno je povinné"
+        } else if (!name.contains(' ')) {
+            validated = false
+            binding.editTextRunnerName.error = "Text musí obsahovat jméno i příjmení"
+        } else if (!name.all { ch -> ch.isLetter() || ch == ' ' }) {
+            validated = false
+            binding.editTextRunnerName.error = "Jméno obsahuje nepovolené znaky"
+        }
+
+        if (team.isEmpty()) {
+            validated = false
+            binding.editTextRunnerTeam.error = "Oddíl je povinný"
+        } else if (!team.all { ch -> ch.isLetter() || ch == ' ' }) {
+            validated = false
+            binding.editTextRunnerTeam.error = "Název oddílu obsahuje nepovolené znaky"
+        }
+
+        return validated
     }
 
     private fun handleBackButtonPressed() {

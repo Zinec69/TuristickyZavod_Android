@@ -39,7 +39,7 @@ android {
 
 dependencies {
     // defaults
-    implementation 'androidx.core:core-ktx:1.9.0'
+    implementation 'androidx.core:core-ktx:1.10.0'
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation "com.google.android.material:material:$rootProject.material_version"
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
@@ -68,5 +68,5 @@ dependencies {
     implementation "com.squareup.moshi:moshi:$rootProject.moshi_version"
     kapt "com.squareup.moshi:moshi-kotlin-codegen:$rootProject.moshi_version"
     implementation "com.squareup.retrofit2:converter-moshi:2.9.0"
-    implementation "com.squareup.moshi:moshi-kotlin:1.9.1"
+    implementation "com.squareup.moshi:moshi-kotlin:$rootProject.moshi_version"
 }

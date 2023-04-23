@@ -42,6 +42,13 @@
                 android:title="@string/menu_item_action_reset"
                 android:checkable="false"
                 app:showAsAction="ifRoom"/>
+            <item
+                android:id="@+id/menuItem_test"
+                android:icon="@drawable/group_add_fill"
+                android:title="Test"
+                android:checkable="false"
+                app:showAsAction="ifRoom"
+                android:visible="false"/>
         </menu>
     </item>
 
