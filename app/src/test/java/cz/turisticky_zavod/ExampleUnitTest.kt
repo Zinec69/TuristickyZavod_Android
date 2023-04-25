@@ -1,4 +1,4 @@
-package com.example.turisticky_zavod
+package cz.turisticky_zavod
 
 import org.junit.Test
 

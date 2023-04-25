@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="nfcScanning">
-        <item name="lottie_rawRes">@raw/read_card</item>
+        <item name="lottie_rawRes">@raw/read_card_black</item>
     </style>
 </resources>

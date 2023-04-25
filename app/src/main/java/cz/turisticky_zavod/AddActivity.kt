@@ -1,4 +1,4 @@
-package com.example.turisticky_zavod
+package cz.turisticky_zavod
 
 import android.annotation.SuppressLint
 import android.content.DialogInterface
@@ -27,7 +27,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.children
 import androidx.lifecycle.lifecycleScope
 import com.airbnb.lottie.LottieAnimationView
-import com.example.turisticky_zavod.databinding.ActivityAddBinding
+import cz.turisticky_zavod.databinding.ActivityAddBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

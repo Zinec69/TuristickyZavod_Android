@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    namespace 'com.example.turisticky_zavod'
+    namespace 'cz.turisticky_zavod'
     compileSdk 33
 
     defaultConfig {
-        applicationId "com.example.turisticky_zavod"
+        applicationId "cz.turisticky_zavod"
         minSdk 24
         targetSdk 33
         versionCode 1

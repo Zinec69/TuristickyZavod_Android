@@ -1,4 +1,4 @@
-package com.example.turisticky_zavod
+package cz.turisticky_zavod
 
 import android.content.Intent
 import android.os.Bundle
@@ -11,7 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.children
 import androidx.lifecycle.lifecycleScope
-import com.example.turisticky_zavod.databinding.ActivityCheckpointBinding
+import cz.turisticky_zavod.databinding.ActivityCheckpointBinding
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

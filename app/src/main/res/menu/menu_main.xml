@@ -1,6 +1,6 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context="com.example.turisticky_zavod.MainActivity">
+    tools:context="cz.turisticky_zavod.MainActivity">
 
     <group android:id="@+id/miscellaneous">
         <item

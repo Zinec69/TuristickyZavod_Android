@@ -1,11 +1,11 @@
-package com.example.turisticky_zavod
+package cz.turisticky_zavod
 
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import androidx.recyclerview.widget.RecyclerView
-import com.example.turisticky_zavod.databinding.ListItemBinding
+import cz.turisticky_zavod.databinding.ListItemBinding
 import java.text.SimpleDateFormat
 import java.util.*
 

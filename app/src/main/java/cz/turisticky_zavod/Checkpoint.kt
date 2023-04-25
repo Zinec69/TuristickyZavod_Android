@@ -1,4 +1,4 @@
-package com.example.turisticky_zavod
+package cz.turisticky_zavod
 
 import androidx.room.*
 
@@ -23,7 +23,7 @@ interface CheckpointDao {
     @Query("UPDATE checkpoint SET active = 1 WHERE name = :name")
     suspend fun setActive(name: String)
 
-    @Query("UPDATE checkpoint SET active = FALSE WHERE active = 1")
+    @Query("UPDATE checkpoint SET active = 0 WHERE active = 1")
     suspend fun reset()
 
     @Insert

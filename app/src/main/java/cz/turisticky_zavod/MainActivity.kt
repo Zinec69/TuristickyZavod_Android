@@ -1,4 +1,4 @@
-package com.example.turisticky_zavod
+package cz.turisticky_zavod
 
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -26,8 +26,8 @@ import androidx.core.view.get
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.airbnb.lottie.LottieAnimationView
-import com.example.turisticky_zavod.NFCHelper.NfcAvailability
-import com.example.turisticky_zavod.databinding.ActivityMainBinding
+import cz.turisticky_zavod.NFCHelper.NfcAvailability
+import cz.turisticky_zavod.databinding.ActivityMainBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.Dispatchers

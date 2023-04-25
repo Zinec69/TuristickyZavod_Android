@@ -1,4 +1,4 @@
-package com.example.turisticky_zavod
+package cz.turisticky_zavod
 
 import android.Manifest.permission.*
 import android.content.BroadcastReceiver
@@ -24,7 +24,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.app.ActivityCompat.requestPermissions
 import androidx.core.content.ContextCompat
-import com.example.turisticky_zavod.databinding.ActivityWifiBinding
+import cz.turisticky_zavod.databinding.ActivityWifiBinding
 
 
 class WifiActivity : AppCompatActivity() {
