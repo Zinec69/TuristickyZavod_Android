@@ -2,7 +2,6 @@ package cz.turisticky_zavod
 
 import android.nfc.NfcAdapter
 import android.nfc.tech.MifareClassic
-import android.util.Log
 import java.nio.charset.Charset
 
 class NFCHelper {
@@ -32,7 +31,7 @@ class NFCHelper {
                     } else {
                         allStr += block
                     }
-                    Log.d("NFC DEBUG READ", "Block $i: $block")
+                    // Log.d("NFC DEBUG READ", "Block $i: $block")
 
                     i++
                     if (--count < 0) break
@@ -51,9 +50,9 @@ class NFCHelper {
         if (allStrArray.size < 6)
             throw NFCException("Data jsou nekompletní nebo ve špatném formátu")
 
-        Log.d("NFC DEBUG READ", "Whole string: $allStr")
-        Log.d("NFC DEBUG READ", "String array: $allStrArray")
-        Log.d("NFC DEBUG READ", "Tag read in: ${System.currentTimeMillis() - start}ms")
+        // Log.d("NFC DEBUG READ", "Whole string: $allStr")
+        // Log.d("NFC DEBUG READ", "String array: $allStrArray")
+        // Log.d("NFC DEBUG READ", "Tag read in: ${System.currentTimeMillis() - start}ms")
 
         val checkpointInfoArray = ArrayList<CheckpointInfo>()
         if (allStrArray.size > 6) {
@@ -116,10 +115,10 @@ class NFCHelper {
             if (tag.authenticateSectorWithKeyA(tag.blockToSector(i), MifareClassic.KEY_DEFAULT)) {
                 while ((i + 1) % blocksInSector != 0 && stage < allByteArrays.size) {
                     if (stage < 0) {
-                        Log.d("NFC DEBUG WRITE", "Block $i: ${arraySizeBytesFit.toString(Charset.forName("Windows-1250"))}")
+                        // Log.d("NFC DEBUG WRITE", "Block $i: ${arraySizeBytesFit.toString(Charset.forName("Windows-1250"))}")
                         tag.writeBlock(i, arraySizeBytesFit)
                     } else {
-                        Log.d("NFC DEBUG WRITE", "Block $i: ${allByteArrays[stage].toString(Charset.forName("Windows-1250"))}")
+                        // Log.d("NFC DEBUG WRITE", "Block $i: ${allByteArrays[stage].toString(Charset.forName("Windows-1250"))}")
                         tag.writeBlock(i, allByteArrays[stage])
                     }
                     i++
@@ -133,7 +132,7 @@ class NFCHelper {
         if (stage < allByteArrays.size)
             throw NFCException("Málo místa na čipu pro zapsání všech dat")
 
-        Log.d("NFC DEBUG WRITE", "Tag written to in: ${System.currentTimeMillis() - start}ms")
+        // Log.d("NFC DEBUG WRITE", "Tag written to in: ${System.currentTimeMillis() - start}ms")
     }
 
     private fun stringToByteArraySplits(str: String): List<ByteArray> {

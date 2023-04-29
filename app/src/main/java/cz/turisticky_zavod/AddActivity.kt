@@ -13,7 +13,6 @@ import android.nfc.tech.MifareClassic
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
-import android.util.Log
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.*
@@ -27,14 +26,13 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.children
 import androidx.lifecycle.lifecycleScope
 import com.airbnb.lottie.LottieAnimationView
-import cz.turisticky_zavod.databinding.ActivityAddBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import cz.turisticky_zavod.databinding.ActivityAddBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.collections.ArrayList
 
 class QueueInfo(
     val runner: Runner,
@@ -395,7 +393,7 @@ class AddActivity : AppCompatActivity(), ReaderCallback {
         }.start()
 
         Toast.makeText(this@AddActivity, mess, Toast.LENGTH_LONG).show()
-        e?.stackTraceToString()?.let { Log.d("NFC", it) }
+        // e?.stackTraceToString()?.let { Log.d("NFC", it) }
     }
 
     private fun scanForRunner() {

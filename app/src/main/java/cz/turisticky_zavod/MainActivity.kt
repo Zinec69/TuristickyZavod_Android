@@ -5,16 +5,22 @@ import android.app.Activity
 import android.content.DialogInterface
 import android.content.Intent
 import android.nfc.NfcAdapter
-import android.nfc.NfcAdapter.*
+import android.nfc.NfcAdapter.EXTRA_READER_PRESENCE_CHECK_DELAY
+import android.nfc.NfcAdapter.FLAG_READER_NFC_A
+import android.nfc.NfcAdapter.ReaderCallback
+import android.nfc.NfcAdapter.getDefaultAdapter
 import android.nfc.Tag
 import android.nfc.TagLostException
 import android.nfc.tech.MifareClassic
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
-import android.util.Log
 import android.view.View
-import android.widget.*
+import android.widget.Button
+import android.widget.ImageView
+import android.widget.PopupMenu
+import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
@@ -26,10 +32,10 @@ import androidx.core.view.get
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.airbnb.lottie.LottieAnimationView
-import cz.turisticky_zavod.NFCHelper.NfcAvailability
-import cz.turisticky_zavod.databinding.ActivityMainBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
+import cz.turisticky_zavod.NFCHelper.NfcAvailability
+import cz.turisticky_zavod.databinding.ActivityMainBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
@@ -258,11 +264,10 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
                                 runner = runnersList[i]
                                 runner.finishTime = System.currentTimeMillis()
 
-                                val checkpointInfoIndex =
-                                    runner.checkpointInfo.indexOfFirst { x -> x.checkpointId == 1 }
+                                val checkpointInfoIndex = runner.checkpointInfo
+                                                                .indexOfFirst { x -> x.checkpointId == 1 }
                                 if (checkpointInfoIndex >= 0) {
-                                    runner.checkpointInfo[checkpointInfoIndex].timeArrived =
-                                        runner.finishTime!!
+                                    runner.checkpointInfo[checkpointInfoIndex].timeArrived = runner.finishTime!!
                                 }
 
                                 runnersList.removeAt(i)
@@ -281,28 +286,28 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
                                 return
                             }
                         }
-                        for (ch in runner.checkpointInfo) {
-                            if (ch.checkpointId == 1) {
-                                runner.finishTime = System.currentTimeMillis()
-                                ch.timeArrived = runner.finishTime!!
-
-                                nfcHelper.writeRunnerOnTag(ndef, runner)
-
-                                runnerViewModel.insert(runner)
-
-                                runOnUiThread {
-                                    scanSuccess(runner, false)
-                                }
-                                return
-                            }
-                        }
+//                        for (ch in runner.checkpointInfo) {
+//                            if (ch.checkpointId == 1) {
+//                                runner.finishTime = System.currentTimeMillis()
+//                                ch.timeArrived = runner.finishTime!!
+//
+//                                nfcHelper.writeRunnerOnTag(ndef, runner)
+//
+//                                runnerViewModel.insert(runner)
+//
+//                                runOnUiThread {
+//                                    scanSuccess(runner, false)
+//                                }
+//                                return
+//                            }
+//                        }
                         runOnUiThread {
                             scanFail(null, "Tento běžec nemá záznam o startu")
                         }
                         return
                     } else {
                         runOnUiThread {
-                            scanFail(null, "Tento běžec již byl zpracován")
+                            scanFail(null, "Tento běžec již má zapsán čas cíle")
                         }
                         return
                     }
@@ -374,7 +379,7 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
         }.start()
 
         Toast.makeText(this@MainActivity, mess, Toast.LENGTH_LONG).show()
-        e?.stackTraceToString()?.let { Log.d("NFC", it) }
+        // e?.stackTraceToString()?.let { Log.d("NFC", it) }
     }
 
     private fun handleScanningNewRunner() {
@@ -446,7 +451,7 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
             if (runnersList.size == 0)
                 binding.textViewNoData.visibility = View.VISIBLE
         } catch (e: Exception) {
-            Log.d("DB", e.stackTraceToString())
+            // Log.d("DB", e.stackTraceToString())
             Toast.makeText(this@MainActivity, "Chyba při mazání záznamu", Toast.LENGTH_LONG).show()
         }
     }
@@ -461,7 +466,7 @@ class MainActivity : AppCompatActivity(), ReaderCallback {
             rvAdapter.notifyItemRangeRemoved(0, size)
             binding.textViewNoData.visibility = View.VISIBLE
         } catch (e: Exception) {
-            Log.d("DB", e.stackTraceToString())
+            // Log.d("DB", e.stackTraceToString())
             Toast.makeText(this@MainActivity, "Chyba při mazání záznamů", Toast.LENGTH_LONG).show()
         }
     }

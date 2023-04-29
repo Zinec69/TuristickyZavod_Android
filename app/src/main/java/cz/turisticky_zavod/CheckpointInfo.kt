@@ -2,7 +2,12 @@ package cz.turisticky_zavod
 
 import android.os.Parcelable
 import androidx.room.TypeConverter
-import com.squareup.moshi.*
+import com.squareup.moshi.FromJson
+import com.squareup.moshi.JsonAdapter
+import com.squareup.moshi.JsonClass
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.ToJson
+import com.squareup.moshi.Types
 import kotlinx.parcelize.Parcelize
 
 @Parcelize

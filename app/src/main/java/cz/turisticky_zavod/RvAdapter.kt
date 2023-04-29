@@ -7,7 +7,7 @@ import android.widget.LinearLayout
 import androidx.recyclerview.widget.RecyclerView
 import cz.turisticky_zavod.databinding.ListItemBinding
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Locale
 
 class RvAdapter(
     private var runnersList: List<Runner>,

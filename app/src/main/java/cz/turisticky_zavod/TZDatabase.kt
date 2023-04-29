@@ -8,14 +8,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
-@Database(entities = [Runner::class, Checkpoint::class], version = 32)
+@Database(entities = [Runner::class, Checkpoint::class], version = 34)
 @TypeConverters(CheckpointInfoJsonConverter::class)
 abstract class TZDatabase : RoomDatabase() {
     abstract fun runnerDao(): RunnerDao
     abstract fun checkpointDao(): CheckpointDao
 
     companion object {
-        @Volatile private var INSTANCE: TZDatabase? = null
+        @Volatile
+        private var INSTANCE: TZDatabase? = null
 
         fun getInstance(context: Context): TZDatabase {
             return INSTANCE ?: synchronized(this) {

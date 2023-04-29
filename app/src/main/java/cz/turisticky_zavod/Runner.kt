@@ -2,7 +2,6 @@ package cz.turisticky_zavod
 
 import android.app.Application
 import android.os.Parcelable
-import android.util.Log
 import androidx.lifecycle.*
 import androidx.room.*
 import com.squareup.moshi.*
@@ -131,7 +130,7 @@ class RunnerViewModel(application: Application) : AndroidViewModel(application) 
 
         val json = jsonAdapter.toJson(runners.value)
 
-        Log.d("JSON EXPORT", "Done in ${System.currentTimeMillis() - start} ms")
+        // Log.d("JSON EXPORT", "Done in ${System.currentTimeMillis() - start} ms")
 
         return json
     }
