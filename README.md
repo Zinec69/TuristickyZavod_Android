@@ -1,4 +1,4 @@
-# Android app for competition runs in Czech republic
+# Android app for orienteering runs in Czech republic
 
 This app's purpose is to read and write data to NFC tags, which the runners should carry instead of the old paper cards
 
